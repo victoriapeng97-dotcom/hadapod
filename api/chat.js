@@ -3,7 +3,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { messages, skinType, userName } = req.body;
+  try {
+    const { messages, skinType, userName } = req.body;
+
+    const cleanMessages = (messages || []).filter(
+      (m) => m && m.role && m.content && m.content.trim() !== ""
+    );
+
+    if (cleanMessages.length === 0) {
+      return res.status(400).json({ error: "No valid messages provided" });
+    }
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
