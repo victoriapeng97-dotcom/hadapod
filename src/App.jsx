@@ -605,27 +605,37 @@ export default function HadaPod() {
     setActiveTab("home");
   };
 
-  const sendMessage = (overrideText, overridePhoto) => {
+  const sendMessage = async (overrideText, overridePhoto) => {
     const text = overrideText !== undefined ? overrideText : chatInput.trim();
-    const photo =
-      overridePhoto !== undefined ? overridePhoto : chatPhotoPreview;
+    const photo = overridePhoto !== undefined ? overridePhoto : chatPhotoPreview;
     if (!text && !photo) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), from: "user", text: text || "", photo, cards: [] },
-    ]);
+    const userMessage = { id: Date.now(), from: "user", text: text || "", photo, cards: [] };
+    setMessages((prev) => [...prev, userMessage]);
     setChatInput("");
     setChatPhotoPreview(null);
     setIsTyping(true);
-    setTimeout(() => {
-      const reply = generateBotReply(text, skinType, !!photo);
-      if (reply.detectedType && !skinType) setSkinType(reply.detectedType);
+    try {
+      const history = messages
+        .concat(userMessage)
+        .filter((m) => m.from === "user" || m.from === "bot")
+        .map((m) => ({ role: m.from === "user" ? "user" : "assistant", content: m.text || "" }))
+        .filter((m) => m.content.trim() !== "");
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: history,
+          skinType: skinType,
+          userName: currentUser?.name,
+        }),
+      });
+      const data = await response.json();
       setIsTyping(false);
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now() + 1, from: "bot", ...reply },
-      ]);
-    }, 900 + Math.random() * 500);
+      setMessages((prev) => [...prev, { id: Date.now() + 1, from: "bot", text: data.reply, cards: [] }]);
+    } catch (error) {
+      setIsTyping(false);
+      setMessages((prev) => [...prev, { id: Date.now() + 1, from: "bot", text: "Sorry, I'm having trouble connecting right now. Please try again!", cards: [] }]);
+    }
   };
 
   const handleChatPhoto = (e) => {
