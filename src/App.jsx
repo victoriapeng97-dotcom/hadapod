@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { signInWithGoogle, logOut, saveUserData, getUserData, auth } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 /* ─── DATA ─────────────────────────────────────────────────────── */
 const SKIN_TYPES = ["Normal", "Dry", "Oily", "Combination", "Sensitive"];
@@ -517,19 +519,24 @@ export default function HadaPod() {
   };
 
   // ── Auth helpers ──
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setAuthLoading(true);
-    setTimeout(() => {
-      setAuthLoading(false);
+    setAuthError("");
+    try {
+      const result = await signInWithGoogle();
+      const user = result.user;
       setCurrentUser({
-        name: "Alex Johnson",
-        email: "alex@gmail.com",
-        avatar: "AJ",
-        provider: "google",
+        name: user.displayName,
+        email: user.email,
+        avatar: user.displayName.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2),
+        provider: "google"
       });
       setIsLoggedIn(true);
       setAuthScreen("onboarding");
-    }, 1400);
+    } catch (error) {
+      setAuthError("Google sign in failed. Please try again.");
+    }
+    setAuthLoading(false);
   };
 
   const handleEmailSignup = () => {
@@ -579,8 +586,21 @@ export default function HadaPod() {
     }, 1200);
   };
 
-  const finishOnboarding = () => {
+  const finishOnboarding = async () => {
     if (onboardAnswers.skinType) setSkinType(onboardAnswers.skinType);
+    try {
+      if (auth.currentUser) {
+        await saveUserData(auth.currentUser.uid, {
+          name: currentUser?.name,
+          email: currentUser?.email,
+          skinType: onboardAnswers.skinType,
+          skinConcerns: onboardAnswers.skinConcerns,
+          skinGoals: onboardAnswers.skinGoals,
+        });
+      }
+    } catch (error) {
+      console.log("Could not save data:", error);
+    }
     setAuthScreen("app");
     setActiveTab("home");
   };
