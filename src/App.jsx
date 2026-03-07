@@ -615,16 +615,16 @@ export default function HadaPod() {
     setChatPhotoPreview(null);
     setIsTyping(true);
     try {
-      const history = messages
-        .concat(userMessage)
-        .filter((m) => m.from === "user" || m.from === "bot")
-        .map((m) => ({ role: m.from === "user" ? "user" : "assistant", content: m.text || "" }))
-        .filter((m) => m.content.trim() !== "");
+      const history = [...messages, userMessage]
+        .filter((m) => (m.from === "user" || m.from === "bot") && m.text && m.text.trim() !== "")
+        .map((m) => ({ role: m.from === "user" ? "user" : "assistant", content: m.text.trim() }));
+
+const safeHistory = history.length > 0 ? history : [{ role: "user", content: text }];
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: history,
+          messages: safeHistory,
           skinType: skinType,
           userName: currentUser?.name,
         }),
