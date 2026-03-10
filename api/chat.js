@@ -14,7 +14,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No valid messages provided" });
     }
 
-  try {
+    const systemPrompt = `You are Sora, a warm and knowledgeable AI skincare advisor for HadaPod. You give evidence-based skincare advice in a friendly, luxury tone like a knowledgeable friend who happens to be a dermatologist. Always recommend clinically-backed ingredients and products. Be concise but thorough. Use a warm, elegant tone. When recommending products, mention specific brands and why. Always remind users to patch test new products. Never diagnose medical conditions.${skinType ? " The user's skin type is: " + skinType + "." : ""}${userName ? " The user's name is: " + userName + "." : ""}`;
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -25,32 +26,19 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 1024,
-        system: `You are Sora, a warm and knowledgeable AI skincare advisor for HadaPod. You give evidence-based skincare advice in a friendly, luxury tone — like a knowledgeable friend who happens to be a dermatologist.
-
-Key guidelines:
-- Always recommend clinically-backed ingredients and products
-- Be concise but thorough — 2-4 sentences per point
-- Use a warm, elegant tone (think Aesop or Tatcha brand voice)
-- If the user has a known skin type, tailor advice to it
-- When recommending products, mention specific brands and why
-- Always remind users to patch test new products
-- Never diagnose medical conditions — suggest seeing a dermatologist for serious concerns
-${skinType ? `\nThe user's skin type is: ${skinType}` : ""}
-${userName ? `\nThe user's name is: ${userName}` : ""}`,
-        messages: messages,
+        system: systemPrompt,
+        messages: cleanMessages,
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: data });
+      return res.status(500).json({ error: "AI service error" });
     }
 
-    return res.status(200).json({
-      reply: data.content[0].text,
-    });
+    return res.status(200).json({ reply: data.content[0].text });
   } catch (error) {
-    return res.status(500).json({ error: "Failed to contact Claude API" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
