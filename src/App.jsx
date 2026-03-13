@@ -877,7 +877,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
             fontFamily: "'Jost',sans-serif",
           }}
         >
-          {item.description?.slice(0, 80)}...
+          {(item.why || item.description || "")?.slice(0, 80)}{(item.why || item.description || "").length > 80 ? "..." : ""}
         </div>
         {isProduct && (
           <div
@@ -897,7 +897,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                 color: "#2A2018",
               }}
             >
-              {item.price}
+              {item.ingredient || item.price || ""}
             </span>
             <div style={{ display: "flex", gap: 2 }}>
               {[1, 2, 3, 4, 5].map((s) => (
