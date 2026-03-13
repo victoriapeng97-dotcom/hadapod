@@ -737,16 +737,28 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
     showNotif("Collection created ✓");
   };
 
-  const BoldText = ({ text }) =>
-    (text || "")
-      .split(/(\*\*[^*]+\*\*)/)
-      .map((p, i) =>
-        p.startsWith("**") ? (
-          <strong key={i}>{p.slice(2, -2)}</strong>
-        ) : (
-          <span key={i}>{p}</span>
-        )
-      );
+  const BoldText = ({ text }) => {
+    const lines = (text || "").split("\n");
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {lines.map((line, i) => {
+          const isBullet = line.trim().startsWith("•") || line.trim().startsWith("-") || line.trim().startsWith("·");
+          const parts = line.split(/(\*\*[^*]+\*\*)/);
+          const formatted = parts.map((p, j) =>
+            p.startsWith("**") ? <strong key={j}>{p.slice(2, -2)}</strong> : <span key={j}>{p}</span>
+          );
+          return isBullet ? (
+            <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <span style={{ color: "#C8877A", marginTop: 2, flexShrink: 0 }}>•</span>
+              <span>{formatted}</span>
+            </div>
+          ) : (
+            <div key={i}>{formatted}</div>
+          );
+        })}
+      </div>
+    );
+  };
 
   const analysisData = analysisResult ? ANALYSIS_RESULTS[analysisResult] : null;
 
