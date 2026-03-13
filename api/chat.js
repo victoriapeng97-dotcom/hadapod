@@ -10,28 +10,7 @@ export default async function handler(req, res) {
     if (cleanMessages.length === 0) {
       return res.status(400).json({ error: "No valid messages" });
     }
-    const system = `You are Sora, HadaPod's warm and elegant AI skincare advisor. Think of yourself as a knowledgeable best friend with luxury taste and dermatologist-level knowledge.
-
-RESPONSE STYLE:
-- Keep replies concise and scannable — 2-3 sentences max, then bullet points if needed
-- Use bullet points for ingredients, steps, or product lists
-- Always end with one follow-up question to learn more about the user's skin
-- Warm, elegant tone — like a luxury spa advisor who genuinely cares
-
-ALWAYS INCLUDE when recommending products:
-- 2-3 specific product recommendations with brand names and why they work
-- Key ingredient to look for and what it does
-- Format each product like: "• [Product Name] by [Brand] — [one sentence why]"
-- Add a note like "✨ Save this to your routine!" to encourage saving
-
-FOCUS ON:
-- Evidence-based ingredients (niacinamide, retinol, hyaluronic acid, etc.)
-- Morning vs evening routine distinction when relevant
-- Patch testing reminders for new products
-- Never diagnose — suggest a dermatologist for medical concerns
-${skinType ? "User's skin type: " + skinType + "." : ""}
-${userName ? "User's name: " + userName + "." : ""}`;
-
+    const system = "You are Sora, HadaPod's warm elegant AI skincare advisor. Keep replies concise — 2-3 sentences then bullets if needed. Always end with a follow-up question. IMPORTANT: When recommending products, after your text reply add exactly this format on a new line: PRODUCTS: followed by a JSON array like [{\"name\":\"CeraVe Moisturizer\",\"brand\":\"CeraVe\",\"ingredient\":\"Ceramides\",\"why\":\"Repairs skin barrier\",\"emoji\":\"🧴\",\"tag\":\"Hydration Hero\",\"type\":\"product\",\"category\":\"Moisturizer\"}]. Include 2-3 products. Tag must be one of: Gold Standard, Universal, Hydration Hero, Acne Fighter, Barrier Essential, Brightening, Sensitive Safe, Resurfacing." + (skinType ? " User skin type: " + skinType + "." : "") + (userName ? " User name: " + userName + "." : "");
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -43,7 +22,20 @@ ${userName ? "User's name: " + userName + "." : ""}`;
     });
     const data = await response.json();
     if (!response.ok) return res.status(500).json({ error: "AI error" });
-    return res.status(200).json({ reply: data.content[0].text });
+    const fullText = data.content[0].text;
+    let reply = fullText;
+    let products = [];
+    const productMatch = fullText.match(/PRODUCTS:\s*(\[[\s\S]*?\])/);
+    if (productMatch) {
+      try {
+        products = JSON.parse(productMatch[1]);
+        products = products.map((p, i) => ({ ...p, id: "sora-" + Date.now() + "-" + i }));
+        reply = fullText.replace(/PRODUCTS:[\s\S]*/, "").trim();
+      } catch (e) {
+        products = [];
+      }
+    }
+    return res.status(200).json({ reply, products });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

@@ -631,7 +631,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
       });
       const data = await response.json();
       setIsTyping(false);
-      setMessages((prev) => [...prev, { id: Date.now() + 1, from: "bot", text: data.reply, cards: [] }]);
+      setMessages((prev) => [...prev, { id: Date.now() + 1, from: "bot", text: data.reply, cards: data.products || [] }]);
     } catch (error) {
       setIsTyping(false);
       setMessages((prev) => [...prev, { id: Date.now() + 1, from: "bot", text: "Sorry, I'm having trouble connecting right now. Please try again!", cards: [] }]);
