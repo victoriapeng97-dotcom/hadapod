@@ -475,6 +475,8 @@ export default function HadaPod() {
           provider: user.providerData[0]?.providerId || 'email',
         });
         if (userData?.skinType) setSkinType(userData.skinType);
+        if (userData?.starredItems) setStarredItems(userData.starredItems);
+        if (userData?.collections) setCollections(userData.collections);
         setIsLoggedIn(true);
         if (userData?.onboardingComplete) {
           setAuthScreen('app');
