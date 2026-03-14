@@ -765,153 +765,45 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
   /* ── Item Card ── */
   const ItemCard = ({ item }) => {
     const starred = starredItems[item.id];
-    const isProduct = item.type === "product";
+    const isProduct = item.type === 'product';
+    const [productImg, setProductImg] = useState(null);
+    useEffect(() => {
+      if (isProduct && item.name) {
+        const query = encodeURIComponent((item.name || '') + ' ' + (item.brand || ''));
+        fetch('https://world.openbeautyfacts.org/cgi/search.pl?search_terms=' + query + '&search_simple=1&action=process&json=1&page_size=1')
+          .then(r => r.json())
+          .then(d => { if (d && d.products && d.products[0] && d.products[0].image_url) setProductImg(d.products[0].image_url); })
+          .catch(() => {});
+      }
+    }, [item.name]);
     const tagColors = {
-      "Gold Standard": "#C9A84C",
-      Universal: "#7BAF7B",
-      "Hydration Hero": "#6FA3C4",
-      "Acne Fighter": "#C47B6F",
-      "Barrier Essential": "#B89BC8",
-      Brightening: "#D4956A",
-      "Sensitive Safe": "#D4878A",
-      Resurfacing: "#8A9BC4",
+      'Gold Standard': '#C9A84C', Universal: '#7BAF7B', 'Hydration Hero': '#6FA3C4',
+      'Acne Fighter': '#C47B6F', 'Barrier Essential': '#B89BC8', Brightening: '#D4956A',
+      'Sensitive Safe': '#D4878A', Resurfacing: '#8A9BC4',
     };
     return (
-      <div
-        style={{
-          background: "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(12px)",
-          border: "1px solid rgba(212,185,160,0.3)",
-          borderRadius: 20,
-          padding: "18px 16px",
-          width: 220,
-          flexShrink: 0,
-          boxShadow: "0 8px 32px rgba(180,140,110,0.12)",
-          position: "relative",
-          transition: "transform 0.2s, box-shadow 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "translateY(-4px)";
-          e.currentTarget.style.boxShadow = "0 16px 48px rgba(180,140,110,0.2)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "0 8px 32px rgba(180,140,110,0.12)";
-        }}
+      <div style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(212,185,160,0.3)', borderRadius: 20, padding: '18px 16px', width: 220, flexShrink: 0, boxShadow: '0 8px 32px rgba(180,140,110,0.12)', position: 'relative', transition: 'transform 0.2s, box-shadow 0.2s' }}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(180,140,110,0.2)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(180,140,110,0.12)'; }}
       >
         {isProduct && (
-          <div style={{ fontSize: 32, marginBottom: 10, textAlign: "center" }}>
-            {item.emoji}
+          <div style={{ fontSize: 32, marginBottom: 10, textAlign: 'center', height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {productImg ? <img src={productImg} alt={item.name} style={{ maxHeight: 80, maxWidth: '100%', objectFit: 'contain', borderRadius: 8 }} /> : <span>{item.emoji || '🧴'}</span>}
           </div>
         )}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: 6,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 8,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              padding: "3px 8px",
-              borderRadius: 20,
-              fontFamily: "'Jost',sans-serif",
-              fontWeight: 600,
-              background: tagColors[item.tag] || "#D4B896" + "22",
-              color: tagColors[item.tag] || "#8A7060",
-              border: `1px solid ${tagColors[item.tag] || "#D4B896"}44`,
-            }}
-          >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+          <span style={{ fontSize: 8, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 20, fontFamily: "'Jost',sans-serif", fontWeight: 600, background: (tagColors[item.tag] || '#D4B896') + '22', color: tagColors[item.tag] || '#8A7060', border: '1px solid ' + (tagColors[item.tag] || '#D4B896') + '44' }}>
             {isProduct ? item.ingredient : item.tag}
           </span>
-          <button
-            onClick={() => toggleStar(item)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontSize: 18,
-              color: starred ? "#E8B84B" : "#D4C4B0",
-              transition: "all 0.2s",
-              padding: 0,
-              lineHeight: 1,
-              transform: starred ? "scale(1.25)" : "scale(1)",
-            }}
-          >
-            ★
-          </button>
+          <button onClick={() => toggleStar(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: starred ? '#E8B84B' : '#D4C4B0', transition: 'all 0.2s', padding: 0, lineHeight: 1, transform: starred ? 'scale(1.25)' : 'scale(1)' }}>★</button>
         </div>
-        <div
-          style={{
-            fontFamily: "'Cormorant Garamond',serif",
-            fontSize: 15,
-            fontWeight: 700,
-            marginBottom: 2,
-            lineHeight: 1.3,
-            color: "#2A2018",
-          }}
-        >
-          {item.name}
-        </div>
-        <div
-          style={{
-            fontSize: 10,
-            color: "#A09080",
-            marginBottom: 8,
-            fontFamily: "'Jost',sans-serif",
-            letterSpacing: "0.05em",
-          }}
-        >
-          {item.brand}
-        </div>
-        <div
-          style={{
-            fontSize: 11,
-            color: "#6A5A4A",
-            lineHeight: 1.6,
-            marginBottom: 10,
-            fontFamily: "'Jost',sans-serif",
-          }}
-        >
-          {(item.why || item.description || "")?.slice(0, 80)}{(item.why || item.description || "").length > 80 ? "..." : ""}
-        </div>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 15, fontWeight: 700, marginBottom: 2, lineHeight: 1.3, color: '#2A2018' }}>{item.name}</div>
+        <div style={{ fontSize: 10, color: '#A09080', marginBottom: 8, fontFamily: "'Jost',sans-serif", letterSpacing: '0.05em' }}>{item.brand}</div>
+        <div style={{ fontSize: 11, color: '#6A5A4A', lineHeight: 1.6, marginBottom: 10, fontFamily: "'Jost',sans-serif" }}>{(item.why || item.description || '').slice(0, 80)}{(item.why || item.description || '').length > 80 ? '...' : ''}</div>
         {isProduct && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              borderTop: "1px solid rgba(212,185,160,0.3)",
-              paddingTop: 10,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "'Cormorant Garamond',serif",
-                fontWeight: 700,
-                fontSize: 16,
-                color: "#2A2018",
-              }}
-            >
-              {item.ingredient || item.price || ""}
-            </span>
-            <div style={{ display: "flex", gap: 2 }}>
-              {[1, 2, 3, 4, 5].map((s) => (
-                <span
-                  key={s}
-                  style={{
-                    color: s <= Math.round(item.rating) ? "#E8B84B" : "#E0D5C8",
-                    fontSize: 11,
-                  }}
-                >
-                  ★
-                </span>
-              ))}
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(212,185,160,0.3)', paddingTop: 10 }}>
+            <span style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, fontSize: 14, color: '#2A2018' }}>{item.ingredient || ''}</span>
+            <div style={{ display: 'flex', gap: 2 }}>{[1,2,3,4,5].map(s => <span key={s} style={{ color: s <= Math.round(item.rating) ? '#E8B84B' : '#E0D5C8', fontSize: 11 }}>★</span>)}</div>
           </div>
         )}
       </div>
