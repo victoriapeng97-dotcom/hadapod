@@ -596,6 +596,7 @@ export default function HadaPod() {
           skinType: onboardAnswers.skinType,
           skinConcerns: onboardAnswers.skinConcerns,
           skinGoals: onboardAnswers.skinGoals,
+          onboardingComplete: true,
         });
       }
     } catch (error) {
