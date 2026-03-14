@@ -478,6 +478,7 @@ export default function HadaPod() {
         if (userData?.starredItems) setStarredItems(userData.starredItems);
         if (userData?.collections) setCollections(userData.collections);
         if (userData?.chatHistory) setChatHistory(userData.chatHistory);
+        if (userData?.analysisHistory) setAnalysisHistory(userData.analysisHistory);
         setIsLoggedIn(true);
         if (userData?.onboardingComplete) {
           setAuthScreen('app');
@@ -533,6 +534,8 @@ export default function HadaPod() {
   const [chatHistory, setChatHistory] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [showChatDrawer, setShowChatDrawer] = useState(false);
+  const [analysisHistory, setAnalysisHistory] = useState([]);
+  const [showProgressView, setShowProgressView] = useState(false);
   const [notification, setNotification] = useState(null);
   const [routine, setRoutine] = useState({ AM: {}, PM: {} });
   const [routineTime, setRoutineTime] = useState("AM");
@@ -699,6 +702,14 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
           setSkinType(d);
           setAnalysisResult(d);
           setAnalysisStage("done");
+          if (auth.currentUser) {
+            const entry = { id: 'analysis-' + Date.now(), date: new Date().toISOString(), result: d, score: ANALYSIS_RESULTS[d]?.score || 0, concerns: ANALYSIS_RESULTS[d]?.concerns || [], characteristics: ANALYSIS_RESULTS[d]?.characteristics || [] };
+            setAnalysisHistory(prev => {
+              const updated = [entry, ...prev].slice(0, 20);
+              saveUserData(auth.currentUser.uid, { analysisHistory: updated });
+              return updated;
+            });
+          }
         }, 350);
       }
       setAnalysisProgress(Math.min(p, 100));
@@ -858,6 +869,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
     { id: "chat", label: "Chat with Sora", icon: "✦" },
     { id: "analyze", label: "Skin Analysis", icon: "◎" },
     { id: "profile", label: "My Profile", icon: "◈" },
+    { id: "progress", label: "Progress", icon: "◈" },
     { id: "routine", label: "My Routine", icon: "◷" },
   ];
 
@@ -5783,7 +5795,92 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
             )}
           </div>
         )}
+{/* ══════════════ PROGRESS TAB ══════════════ */}
+        {activeTab === "progress" && (
+          <div className="fade-in" style={{ padding: "32px 24px", maxWidth: 960, margin: "0 auto" }}>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, fontWeight: 700, color: "#2A2018", marginBottom: 8 }}>Your Skin Journey 🌿</div>
+            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: "#A09080", marginBottom: 32 }}>Track how your skin evolves over time</div>
 
+            {analysisHistory.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 20px", background: "rgba(255,255,255,0.7)", borderRadius: 24, border: "1px solid rgba(212,185,160,0.3)" }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🔬</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: "#2A2018", marginBottom: 8 }}>No analyses yet</div>
+                <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: "#A09080", marginBottom: 24 }}>Complete a skin analysis to start tracking your progress</div>
+                <button onClick={() => setActiveTab("analyze")} style={{ padding: "12px 28px", background: "linear-gradient(135deg,#C8877A,#D4956A)", border: "none", borderRadius: 24, color: "white", fontFamily: "'Jost',sans-serif", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Start Analysis</button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+                {/* Score Graph */}
+                <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 24, padding: "24px", border: "1px solid rgba(212,185,160,0.3)" }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 700, color: "#2A2018", marginBottom: 20 }}>Skin Score Over Time</div>
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: 12, height: 120 }}>
+                    {[...analysisHistory].reverse().map((a, i) => (
+                      <div key={a.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flex: 1 }}>
+                        <div style={{ fontSize: 11, fontFamily: "'Jost',sans-serif", color: "#2A2018", fontWeight: 600 }}>{a.score}</div>
+                        <div style={{ width: "100%", background: `linear-gradient(180deg,#C8877A,#D4956A)`, borderRadius: "6px 6px 0 0", height: `${a.score}%`, transition: "height 0.5s ease" }} />
+                        <div style={{ fontSize: 9, fontFamily: "'Jost',sans-serif", color: "#A09080", textAlign: "center" }}>{new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Timeline */}
+                <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 24, padding: "24px", border: "1px solid rgba(212,185,160,0.3)" }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 700, color: "#2A2018", marginBottom: 20 }}>Analysis Timeline</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                    {analysisHistory.map((a, i) => (
+                      <div key={a.id} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
+                          <div style={{ width: 12, height: 12, borderRadius: "50%", background: i === 0 ? "#C8877A" : "#D4B896", flexShrink: 0, marginTop: 4 }} />
+                          {i < analysisHistory.length - 1 && <div style={{ width: 2, height: 40, background: "rgba(212,185,160,0.4)" }} />}
+                        </div>
+                        <div style={{ flex: 1, background: i === 0 ? "rgba(200,135,122,0.08)" : "rgba(255,255,255,0.5)", borderRadius: 16, padding: "14px 18px", border: i === 0 ? "1px solid rgba(200,135,122,0.3)" : "1px solid rgba(212,185,160,0.2)" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, fontWeight: 700, color: "#2A2018" }}>{a.result} Skin {i === 0 ? "· Latest" : ""}</div>
+                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, color: "#A09080" }}>{new Date(a.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                          </div>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                            {a.concerns.map((c, j) => (
+                              <span key={j} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "rgba(212,185,160,0.2)", fontFamily: "'Jost',sans-serif", color: "#8A7060" }}>{c}</span>
+                            ))}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <div style={{ flex: 1, height: 6, borderRadius: 3, background: "rgba(212,185,160,0.3)", overflow: "hidden" }}>
+                              <div style={{ width: `${a.score}%`, height: "100%", background: "linear-gradient(90deg,#C8877A,#D4956A)", borderRadius: 3 }} />
+                            </div>
+                            <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 700, color: "#C8877A" }}>{a.score}/100</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Before/After comparison */}
+                {analysisHistory.length >= 2 && (
+                  <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 24, padding: "24px", border: "1px solid rgba(212,185,160,0.3)" }}>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 700, color: "#2A2018", marginBottom: 20 }}>First vs Latest</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                      {[analysisHistory[analysisHistory.length - 1], analysisHistory[0]].map((a, i) => (
+                        <div key={a.id} style={{ borderRadius: 16, padding: "18px", background: i === 1 ? "rgba(200,135,122,0.08)" : "rgba(255,255,255,0.5)", border: i === 1 ? "1px solid rgba(200,135,122,0.3)" : "1px solid rgba(212,185,160,0.2)" }}>
+                          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: i === 1 ? "#C8877A" : "#A09080", marginBottom: 8 }}>{i === 0 ? "First Analysis" : "Latest Analysis"}</div>
+                          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, fontWeight: 700, color: "#2A2018", marginBottom: 4 }}>{a.result} Skin</div>
+                          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 28, fontWeight: 700, color: i === 1 ? "#C8877A" : "#A09080" }}>{a.score}<span style={{ fontSize: 14 }}>/100</span></div>
+                          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, color: "#A09080", marginTop: 4 }}>{new Date(a.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {analysisHistory[0].score > analysisHistory[analysisHistory.length - 1].score && (
+                      <div style={{ marginTop: 16, padding: "12px 18px", background: "rgba(123,175,123,0.1)", borderRadius: 12, border: "1px solid rgba(123,175,123,0.3)", fontFamily: "'Jost',sans-serif", fontSize: 13, color: "#4A7A4A" }}>
+                        🌿 Your skin score improved by {analysisHistory[0].score - analysisHistory[analysisHistory.length - 1].score} points!
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         {/* ══════════════ ROUTINE TAB ══════════════ */}
         {activeTab === "routine" && (
           <div

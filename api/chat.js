@@ -3,14 +3,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
   try {
-    const { messages, skinType, userName } = req.body;
+    const { messages, skinType, userName, analysisHistory } = req.body;
     const cleanMessages = (messages || []).filter(
       (m) => m && m.role && m.content && m.content.trim() !== ""
     );
     if (cleanMessages.length === 0) {
       return res.status(400).json({ error: "No valid messages" });
     }
-    const system = "You are Sora, HadaPod's warm elegant AI skincare advisor. Keep replies concise — 2-3 sentences then bullets if needed. Always end with a follow-up question. IMPORTANT: When recommending products, after your text reply add exactly this format on a new line: PRODUCTS: followed by a JSON array like [{\"name\":\"CeraVe Moisturizer\",\"brand\":\"CeraVe\",\"ingredient\":\"Ceramides\",\"why\":\"Repairs skin barrier\",\"emoji\":\"🧴\",\"tag\":\"Hydration Hero\",\"type\":\"product\",\"category\":\"Moisturizer\"}]. Include 2-3 products. Tag must be one of: Gold Standard, Universal, Hydration Hero, Acne Fighter, Barrier Essential, Brightening, Sensitive Safe, Resurfacing." + (skinType ? " User skin type: " + skinType + "." : "") + (userName ? " User name: " + userName + "." : "");
+    const system = "You are Sora, HadaPod's warm elegant AI skincare advisor. Keep replies concise — 2-3 sentences then bullets if needed. Always end with a follow-up question. IMPORTANT: When recommending products, after your text reply add exactly this format on a new line: PRODUCTS: followed by a JSON array like [{\"name\":\"CeraVe Moisturizer\",\"brand\":\"CeraVe\",\"ingredient\":\"Ceramides\",\"why\":\"Repairs skin barrier\",\"emoji\":\"🧴\",\"tag\":\"Hydration Hero\",\"type\":\"product\",\"category\":\"Moisturizer\"}]. Include 2-3 products. Tag must be one of: Gold Standard, Universal, Hydration Hero, Acne Fighter, Barrier Essential, Brightening, Sensitive Safe, Resurfacing." + (skinType ? " User skin type: " + skinType + "." : "") + (userName ? " User name: " + userName + "." : "") + (analysisHistory && analysisHistory.length > 0 ? " User skin analysis history (most recent first): " + analysisHistory.map(a => a.date.slice(0,10) + ": " + a.result + " skin, score " + a.score + "/100, concerns: " + a.concerns.join(', ')).join(' | ') + "." : "");
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
