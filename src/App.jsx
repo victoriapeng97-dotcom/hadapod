@@ -4192,7 +4192,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                   onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                   title="Chat history"
                 >
-                  🕐
+                  ☰
                 </button>
                 <button
                   onClick={() => chatFileRef.current.click()}
