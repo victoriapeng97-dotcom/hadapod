@@ -479,8 +479,6 @@ export default function HadaPod() {
         if (userData?.collections) setCollections(userData.collections);
         if (userData?.chatHistory) setChatHistory(userData.chatHistory);
         if (userData?.analysisHistory) setAnalysisHistory(userData.analysisHistory);
-        if (userData?.routineSteps) setRoutineSteps(userData.routineSteps);
-        if (userData?.routine) setRoutine(userData.routine);
         setIsLoggedIn(true);
         if (userData?.onboardingComplete) {
           setAuthScreen('app');
@@ -882,9 +880,9 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
         <div style={{ fontSize: 10, color: '#A09080', marginBottom: 8, fontFamily: "'Jost',sans-serif", letterSpacing: '0.05em' }}>{item.brand}</div>
         <div style={{ fontSize: 11, color: '#6A5A4A', lineHeight: 1.6, marginBottom: 10, fontFamily: "'Jost',sans-serif" }}>{(item.why || item.description || '').slice(0, 80)}{(item.why || item.description || '').length > 80 ? '...' : ''}</div>
         {isProduct && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(212,185,160,0.3)', paddingTop: 10 }}>
-            <span style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, fontSize: 14, color: '#2A2018' }}>{item.ingredient || ''}</span>
-            <div style={{ display: 'flex', gap: 2 }}>{[1,2,3,4,5].map(s => <span key={s} style={{ color: s <= Math.round(item.rating) ? '#E8B84B' : '#E0D5C8', fontSize: 11 }}>★</span>)}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid rgba(212,185,160,0.3)', paddingTop: 10 }}>
+            <span style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, fontSize: 13, color: '#2A2018' }}>{item.ingredient || ''}</span>
+            <button onClick={() => setShowAddToRoutine({ step: { id: null, name: "a step" }, item, time: routineTime || "AM", pickStep: true })} style={{ width: '100%', padding: '7px', background: 'rgba(200,135,122,0.1)', border: '1px solid rgba(200,135,122,0.3)', borderRadius: 10, fontFamily: "'Jost',sans-serif", fontSize: 11, color: '#C8877A', fontWeight: 600, cursor: 'pointer' }}>+ Add to Routine</button>
           </div>
         )}
       </div>
@@ -5910,154 +5908,359 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
         )}
         {/* ══════════════ ROUTINE TAB ══════════════ */}
         {activeTab === "routine" && (
-          <div className="fade-in" style={{ padding: "32px 24px", maxWidth: 960, margin: "0 auto" }}>
-            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 34, fontWeight: 700, color: "#2A2018", marginBottom: 6 }}>My Routine</div>
-            <div style={{ fontSize: 14, color: "#8A7060", marginBottom: 28, fontFamily: "'Jost',sans-serif" }}>Build and customize your daily skincare ritual.</div>
-            <div style={{ display: "inline-flex", background: "rgba(255,255,255,0.6)", border: "1px solid rgba(212,184,150,0.3)", borderRadius: 20, padding: 4, marginBottom: 28, backdropFilter: "blur(10px)" }}>
+          <div
+            className="fade-in"
+            style={{ padding: "32px 24px", maxWidth: 860, margin: "0 auto" }}
+          >
+            <div
+              style={{
+                fontFamily: "'Cormorant Garamond',serif",
+                fontSize: 34,
+                fontWeight: 700,
+                color: "#2A2018",
+                marginBottom: 6,
+              }}
+            >
+              My Routine
+            </div>
+            <div
+              style={{
+                fontSize: 14,
+                color: "#8A7060",
+                marginBottom: 28,
+                fontFamily: "'Jost',sans-serif",
+              }}
+            >
+              Track your daily skincare steps and build lasting habits.
+            </div>
+
+            {/* AM/PM toggle */}
+            <div
+              style={{
+                display: "inline-flex",
+                background: "rgba(255,255,255,0.6)",
+                border: "1px solid rgba(212,184,150,0.3)",
+                borderRadius: 20,
+                padding: 4,
+                marginBottom: 28,
+                backdropFilter: "blur(10px)",
+              }}
+            >
               {["AM", "PM"].map((t) => (
-                <button key={t} onClick={() => setRoutineTime(t)} style={{ padding: "10px 32px", background: routineTime === t ? "linear-gradient(135deg,#C8877A,#D4956A)" : "transparent", color: routineTime === t ? "#fff" : "#8A7060", border: "none", borderRadius: 16, cursor: "pointer", fontSize: 13, fontFamily: "'Jost',sans-serif", fontWeight: routineTime === t ? 600 : 400, transition: "all 0.3s" }}>
+                <button
+                  key={t}
+                  onClick={() => setRoutineTime(t)}
+                  style={{
+                    padding: "10px 32px",
+                    background:
+                      routineTime === t
+                        ? "linear-gradient(135deg,#C8877A,#D4956A)"
+                        : "transparent",
+                    color: routineTime === t ? "#fff" : "#8A7060",
+                    border: "none",
+                    borderRadius: 16,
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontFamily: "'Jost',sans-serif",
+                    fontWeight: routineTime === t ? 600 : 400,
+                    transition: "all 0.3s cubic-bezier(0.22,1,0.36,1)",
+                    boxShadow:
+                      routineTime === t
+                        ? "0 4px 16px rgba(200,135,122,0.35)"
+                        : "none",
+                  }}
+                >
                   {t === "AM" ? "☀ Morning" : "☽ Evening"}
                 </button>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 20 }}>
-              <div style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(16px)", border: "1px solid rgba(212,184,150,0.3)", borderRadius: 24, overflow: "hidden", boxShadow: "0 8px 40px rgba(160,110,80,0.1)" }}>
-                {(routineSteps[routineTime] || []).map((step, i) => {
-                  const filled = routine[routineTime]?.[step.id];
-                  const done = completedSteps[routineTime]?.[step.id];
-                  const isEditing = editingStepId === step.id;
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 280px",
+                gap: 20,
+              }}
+            >
+              {/* Steps list */}
+              <div
+                style={{
+                  background: "rgba(255,255,255,0.7)",
+                  backdropFilter: "blur(16px)",
+                  border: "1px solid rgba(212,184,150,0.3)",
+                  borderRadius: 24,
+                  overflow: "hidden",
+                  boxShadow: "0 8px 40px rgba(160,110,80,0.1)",
+                }}
+              >
+                {ROUTINE_STEPS.map((step, i) => {
+                  const filled = routine[routineTime][step];
+                  const done = completedSteps[routineTime][step];
                   return (
-                    <div key={step.id} draggable onDragStart={() => setDraggedStep(step.id)} onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => {
-                        if (!draggedStep || draggedStep === step.id) return;
-                        const steps = [...(routineSteps[routineTime] || [])];
-                        const fromIdx = steps.findIndex(s => s.id === draggedStep);
-                        const toIdx = steps.findIndex(s => s.id === step.id);
-                        const [moved] = steps.splice(fromIdx, 1);
-                        steps.splice(toIdx, 0, moved);
-                        const updated = { ...routineSteps, [routineTime]: steps };
-                        setRoutineSteps(updated);
-                        if (auth.currentUser) saveUserData(auth.currentUser.uid, { routineSteps: updated });
-                        setDraggedStep(null);
+                    <div
+                      key={step}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
+                        padding: "15px 20px",
+                        borderBottom:
+                          i < ROUTINE_STEPS.length - 1
+                            ? "1px solid rgba(212,184,150,0.15)"
+                            : "none",
+                        background: done
+                          ? "rgba(200,135,122,0.04)"
+                          : "transparent",
+                        opacity: done ? 0.55 : 1,
+                        transition: "all 0.2s",
                       }}
-                      style={{ display: "flex", alignItems: "center", gap: 14, padding: "15px 20px", borderBottom: i < (routineSteps[routineTime] || []).length - 1 ? "1px solid rgba(212,184,150,0.15)" : "none", background: done ? "rgba(200,135,122,0.04)" : "transparent", transition: "all 0.2s", cursor: "grab" }}>
-                      <span style={{ color: "#D4C4B0", fontSize: 16, cursor: "grab", flexShrink: 0 }}>⠿</span>
-                      <div onClick={() => filled && setCompletedSteps(prev => ({ ...prev, [routineTime]: { ...prev[routineTime], [step.id]: !prev[routineTime]?.[step.id] } }))}
-                        style={{ width: 24, height: 24, borderRadius: "50%", border: `2px solid ${done ? "#C8877A" : filled ? "rgba(200,135,122,0.6)" : "rgba(212,184,150,0.4)"}`, background: done ? "linear-gradient(135deg,#C8877A,#D4956A)" : "transparent", cursor: filled ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.25s" }}>
-                        {done && <span style={{ color: "#fff", fontSize: 12 }}>✓</span>}
-                      </div>
-                      <span style={{ fontSize: 18, flexShrink: 0 }}>{step.emoji}</span>
-                      {isEditing ? (
-                        <input autoFocus value={editingStepName} onChange={e => setEditingStepName(e.target.value)}
-                          onBlur={() => {
-                            if (editingStepName.trim()) {
-                              const updated = { ...routineSteps, [routineTime]: routineSteps[routineTime].map(s => s.id === step.id ? { ...s, name: editingStepName.trim() } : s) };
-                              setRoutineSteps(updated);
-                              if (auth.currentUser) saveUserData(auth.currentUser.uid, { routineSteps: updated });
-                            }
-                            setEditingStepId(null);
-                          }}
-                          onKeyDown={e => e.key === "Enter" && e.target.blur()}
-                          style={{ flex: 1, border: "none", borderBottom: "2px solid #C8877A", background: "transparent", fontSize: 14, fontFamily: "'Jost',sans-serif", color: "#2A2018", outline: "none", padding: "2px 0" }} />
-                      ) : (
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: "#2A2018", fontFamily: "'Jost',sans-serif" }}>{step.name}</div>
-                          {filled && <div style={{ fontSize: 11, color: "#C8877A", fontFamily: "'Jost',sans-serif", marginTop: 2 }}>{filled.name} · {filled.brand}</div>}
-                        </div>
-                      )}
-                      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                        <button onClick={() => { setEditingStepId(step.id); setEditingStepName(step.name); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#B8A090", padding: 4 }} title="Rename">✏️</button>
-                        <button onClick={() => setShowAddToRoutine({ step, time: routineTime })} style={{ background: "rgba(200,135,122,0.1)", border: "none", cursor: "pointer", fontSize: 12, color: "#C8877A", padding: "4px 8px", borderRadius: 8, fontFamily: "'Jost',sans-serif", fontWeight: 600 }}>+ Add</button>
-                        <button onClick={() => {
-                          const updated = { ...routineSteps, [routineTime]: routineSteps[routineTime].filter(s => s.id !== step.id) };
-                          setRoutineSteps(updated);
-                          if (auth.currentUser) saveUserData(auth.currentUser.uid, { routineSteps: updated });
-                        }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#D4878A", padding: 4 }}>✕</button>
-                      </div>
-                    </div>
-                  );
-                })}
-                {showAddStep ? (
-                  <div style={{ padding: "12px 20px", display: "flex", gap: 10, alignItems: "center", borderTop: "1px solid rgba(212,184,150,0.15)" }}>
-                    <input autoFocus value={newStepName} onChange={e => setNewStepName(e.target.value)} placeholder="Step name..."
-                      onKeyDown={e => {
-                        if (e.key === "Enter" && newStepName.trim()) {
-                          const newStep = { id: "s" + Date.now(), name: newStepName.trim(), emoji: "🧴" };
-                          const updated = { ...routineSteps, [routineTime]: [...(routineSteps[routineTime] || []), newStep] };
-                          setRoutineSteps(updated);
-                          if (auth.currentUser) saveUserData(auth.currentUser.uid, { routineSteps: updated });
-                          setNewStepName(""); setShowAddStep(false);
+                    >
+                      <div
+                        onClick={() =>
+                          filled &&
+                          setCompletedSteps((prev) => ({
+                            ...prev,
+                            [routineTime]: {
+                              ...prev[routineTime],
+                              [step]: !prev[routineTime][step],
+                            },
+                          }))
                         }
-                      }}
-                      style={{ flex: 1, border: "none", borderBottom: "2px solid #C8877A", background: "transparent", fontSize: 14, fontFamily: "'Jost',sans-serif", outline: "none", padding: "4px 0" }} />
-                    <button onClick={() => {
-                      if (newStepName.trim()) {
-                        const newStep = { id: "s" + Date.now(), name: newStepName.trim(), emoji: "🧴" };
-                        const updated = { ...routineSteps, [routineTime]: [...(routineSteps[routineTime] || []), newStep] };
-                        setRoutineSteps(updated);
-                        if (auth.currentUser) saveUserData(auth.currentUser.uid, { routineSteps: updated });
-                        setNewStepName(""); setShowAddStep(false);
-                      }
-                    }} style={{ padding: "6px 16px", background: "linear-gradient(135deg,#C8877A,#D4956A)", border: "none", borderRadius: 10, color: "white", fontFamily: "'Jost',sans-serif", fontSize: 13, cursor: "pointer" }}>Add</button>
-                    <button onClick={() => { setShowAddStep(false); setNewStepName(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#A09080", fontSize: 18 }}>✕</button>
-                  </div>
-                ) : (
-                  <button onClick={() => setShowAddStep(true)} style={{ width: "100%", padding: "14px 20px", background: "none", border: "none", borderTop: "1px solid rgba(212,184,150,0.15)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, color: "#C8877A", fontWeight: 600, textAlign: "left" }}>+ Add Step</button>
-                )}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {["AM", "PM"].map(t => {
-                  const steps = routineSteps[t] || [];
-                  const done = steps.filter(s => completedSteps[t]?.[s.id]).length;
-                  const pct = steps.length === 0 ? 0 : Math.round((done / steps.length) * 100);
-                  return (
-                    <div key={t} style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(16px)", border: "1px solid rgba(212,184,150,0.3)", borderRadius: 20, padding: "20px" }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, fontWeight: 700, color: "#2A2018", marginBottom: 12 }}>{t === "AM" ? "☀ Morning" : "☽ Evening"}</div>
-                      <div style={{ height: 8, borderRadius: 10, background: "rgba(212,184,150,0.25)", overflow: "hidden", marginBottom: 8 }}>
-                        <div style={{ width: `${pct}%`, height: "100%", background: "linear-gradient(90deg,#C8877A,#D4956A)", borderRadius: 10, transition: "width 0.6s" }} />
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: "50%",
+                          border: `2px solid ${
+                            done
+                              ? "#C8877A"
+                              : filled
+                              ? "rgba(200,135,122,0.6)"
+                              : "rgba(212,184,150,0.4)"
+                          }`,
+                          background: done
+                            ? "linear-gradient(135deg,#C8877A,#D4956A)"
+                            : "transparent",
+                          cursor: filled ? "pointer" : "default",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          transition: "all 0.25s",
+                          boxShadow: done
+                            ? "0 2px 10px rgba(200,135,122,0.4)"
+                            : "none",
+                        }}
+                      >
+                        {done && (
+                          <span
+                            style={{
+                              color: "#fff",
+                              fontSize: 11,
+                              fontWeight: 700,
+                            }}
+                          >
+                            ✓
+                          </span>
+                        )}
                       </div>
-                      <div style={{ fontSize: 11, color: pct === 100 ? "#7BAF7B" : "#B8A090", fontFamily: "'Jost',sans-serif" }}>{pct === 100 ? "✓ Complete!" : steps.length === 0 ? "No steps yet" : `${done}/${steps.length} steps done`}</div>
+                      <div style={{ flex: 1 }}>
+                        <div
+                          style={{
+                            fontSize: 13,
+                            fontWeight: done ? 400 : 500,
+                            fontFamily: "'Jost',sans-serif",
+                            color: "#2A2018",
+                            textDecoration: done ? "line-through" : "none",
+                          }}
+                        >
+                          {i + 1}. {step}
+                        </div>
+                        {filled && (
+                          <div
+                            style={{
+                              fontSize: 11,
+                              color: "#C8877A",
+                              marginTop: 2,
+                              fontFamily: "'Jost',sans-serif",
+                              fontStyle: "italic",
+                            }}
+                          >
+                            {filled}
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        placeholder="Add product..."
+                        value={routine[routineTime][step] || ""}
+                        onChange={(e) =>
+                          setRoutine((prev) => ({
+                            ...prev,
+                            [routineTime]: {
+                              ...prev[routineTime],
+                              [step]: e.target.value,
+                            },
+                          }))
+                        }
+                        style={{
+                          padding: "7px 14px",
+                          border: "1px solid rgba(212,184,150,0.35)",
+                          borderRadius: 20,
+                          fontSize: 12,
+                          width: 148,
+                          fontFamily: "'Jost',sans-serif",
+                          background: "rgba(255,255,255,0.6)",
+                          color: "#2A2018",
+                          backdropFilter: "blur(4px)",
+                        }}
+                      />
                     </div>
                   );
                 })}
-                <div style={{ background: "linear-gradient(135deg,rgba(200,135,122,0.18),rgba(212,184,150,0.22))", borderRadius: 20, padding: "20px", border: "1px solid rgba(212,184,150,0.25)" }}>
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", color: "#2A2018", fontSize: 16, fontWeight: 600, marginBottom: 8 }}>{routineTime === "AM" ? "Never Skip Sunscreen ☀️" : "Let Actives Work Overnight 🌙"}</div>
-                  <div style={{ fontSize: 12, color: "#8A7060", lineHeight: 1.7, fontFamily: "'Jost',sans-serif" }}>{routineTime === "AM" ? "UV protection is the single most evidence-backed anti-aging step. Apply SPF 30+ every morning." : "Night is when your skin regenerates. Apply retinol, acids, or peptides to maximize effectiveness."}</div>
+              </div>
+
+              {/* Progress + tips */}
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 14 }}
+              >
+                {["AM", "PM"].map((t) => {
+                  const total = Object.values(routine[t]).filter(
+                    Boolean
+                  ).length;
+                  const done = Object.values(completedSteps[t]).filter(
+                    Boolean
+                  ).length;
+                  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                  return (
+                    <div
+                      key={t}
+                      style={{
+                        background: "rgba(255,255,255,0.7)",
+                        backdropFilter: "blur(16px)",
+                        border: "1px solid rgba(212,184,150,0.3)",
+                        borderRadius: 18,
+                        padding: 20,
+                        boxShadow: "0 4px 20px rgba(160,110,80,0.08)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          marginBottom: 12,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 500,
+                            fontFamily: "'Jost',sans-serif",
+                            color: "#2A2018",
+                          }}
+                        >
+                          {t === "AM" ? "☀ Morning" : "☽ Evening"}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#B8A090",
+                            fontFamily: "'Jost',sans-serif",
+                          }}
+                        >
+                          {done}/{total} steps
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          height: 6,
+                          background: "rgba(212,184,150,0.25)",
+                          borderRadius: 10,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            background:
+                              pct === 100
+                                ? "linear-gradient(90deg,#7BAF7B,#A8D8A8)"
+                                : "linear-gradient(90deg,#C8877A,#D4B896)",
+                            width: `${pct}%`,
+                            borderRadius: 10,
+                            transition:
+                              "width 0.6s cubic-bezier(0.22,1,0.36,1)",
+                          }}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          marginTop: 8,
+                          color: pct === 100 ? "#7BAF7B" : "#B8A090",
+                          fontFamily: "'Jost',sans-serif",
+                          fontStyle: pct === 100 ? "normal" : "italic",
+                        }}
+                      >
+                        {pct === 100
+                          ? "✓ Routine complete!"
+                          : total === 0
+                          ? "Add products to start tracking"
+                          : `${pct}% complete`}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Tip card */}
+                <div
+                  style={{
+                    background:
+                      "linear-gradient(135deg,rgba(200,135,122,0.18),rgba(212,184,150,0.22))",
+                    border: "1px solid rgba(212,184,150,0.3)",
+                    borderRadius: 18,
+                    padding: 22,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 9,
+                      letterSpacing: "0.16em",
+                      textTransform: "uppercase",
+                      color: "rgba(200,135,122,0.8)",
+                      marginBottom: 8,
+                      fontFamily: "'Jost',sans-serif",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Sora's Tip
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "'Cormorant Garamond',serif",
+                      color: "#2A2018",
+                      fontSize: 16,
+                      fontWeight: 600,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {routineTime === "AM"
+                      ? "Never Skip Sunscreen ☀️"
+                      : "Let Actives Work Overnight 🌙"}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "#8A7060",
+                      lineHeight: 1.7,
+                      fontFamily: "'Jost',sans-serif",
+                    }}
+                  >
+                    {routineTime === "AM"
+                      ? "UV protection is the single most evidence-backed anti-aging step. Apply SPF 30+ every single morning, rain or shine."
+                      : "Night is when your skin regenerates. Apply retinol, acids, or peptides in your PM routine to maximize their effectiveness."}
+                  </div>
                 </div>
               </div>
             </div>
-            {showAddToRoutine && (
-              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setShowAddToRoutine(null)}>
-                <div style={{ background: "#FBF7F2", borderRadius: "24px 24px 0 0", padding: "28px 24px", width: "100%", maxWidth: 480 }} onClick={e => e.stopPropagation()}>
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 700, color: "#2A2018", marginBottom: 6 }}>Add to {showAddToRoutine.step.name}</div>
-                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: "#A09080", marginBottom: 20 }}>Choose a product from your collections</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 300, overflowY: "auto" }}>
-                    {collections.flatMap(c => c.items).length === 0 ? (
-                      <div style={{ textAlign: "center", padding: "20px", color: "#A09080", fontFamily: "'Jost',sans-serif", fontSize: 13 }}>No saved products yet. Ask Sora for recommendations and save them first!</div>
-                    ) : (
-                      collections.flatMap(c => c.items).filter((item, idx, arr) => arr.findIndex(i => i.id === item.id) === idx).map(item => (
-                        <div key={item.id} onClick={() => {
-                          const updated = { ...routine, [showAddToRoutine.time]: { ...routine[showAddToRoutine.time], [showAddToRoutine.step.id]: item } };
-                          setRoutine(updated);
-                          if (auth.currentUser) saveUserData(auth.currentUser.uid, { routine: updated });
-                          setShowAddToRoutine(null);
-                          showNotif(`Added to ${showAddToRoutine.step.name} ✓`);
-                        }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "rgba(255,255,255,0.8)", borderRadius: 14, border: "1px solid rgba(212,185,160,0.3)", cursor: "pointer" }}
-                          onMouseEnter={e => e.currentTarget.style.background = "rgba(200,135,122,0.08)"}
-                          onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.8)"}>
-                          <span style={{ fontSize: 24 }}>{item.emoji || "🧴"}</span>
-                          <div>
-                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, fontWeight: 600, color: "#2A2018" }}>{item.name}</div>
-                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, color: "#A09080" }}>{item.brand}</div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  <button onClick={() => setShowAddToRoutine(null)} style={{ width: "100%", marginTop: 16, padding: "12px", background: "rgba(212,184,150,0.2)", border: "none", borderRadius: 14, fontFamily: "'Jost',sans-serif", fontSize: 14, color: "#8A7060", cursor: "pointer" }}>Cancel</button>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </main>
