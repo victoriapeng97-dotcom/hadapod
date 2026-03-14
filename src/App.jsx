@@ -548,14 +548,23 @@ export default function HadaPod() {
     try {
       const result = await signInWithGoogle();
       const user = result.user;
+      const userData = await getUserData(user.uid);
       setCurrentUser({
-        name: user.displayName,
-        email: user.email,
-        avatar: user.displayName.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2),
-        provider: "google"
+        name: userData?.name || user.displayName,
+        email: userData?.email || user.email,
+        avatar: (userData?.name || user.displayName || '?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2),
+        provider: 'google'
       });
+      if (userData?.skinType) setSkinType(userData.skinType);
+      if (userData?.starredItems) setStarredItems(userData.starredItems);
+      if (userData?.collections) setCollections(userData.collections);
       setIsLoggedIn(true);
-      setAuthScreen("onboarding");
+      if (userData?.onboardingComplete) {
+        setAuthScreen('app');
+        setActiveTab('home');
+      } else {
+        setAuthScreen('onboarding');
+      }
     } catch (error) {
       setAuthError("Google sign in failed. Please try again.");
     }
