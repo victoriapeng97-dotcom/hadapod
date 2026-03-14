@@ -687,23 +687,36 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
     e.target.value = "";
   };
 
-  const runAnalysis = (manual) => {
+  const runAnalysis = async (manual, imageBase64, mediaType) => {
     setAnalysisStage("analyzing");
     setAnalysisProgress(0);
     let p = 0;
     const iv = setInterval(() => {
-      p += Math.random() * 18 + 5;
-      if (p >= 100) {
-        p = 100;
-        clearInterval(iv);
-        setTimeout(() => {
-          const d =
-            manual || SKIN_TYPES[Math.floor(Math.random() * SKIN_TYPES.length)];
+      p += Math.random() * 12 + 3;
+      if (p >= 90) p = 90;
+      setAnalysisProgress(Math.min(p, 90));
+    }, 220);
+    try {
+      let d, score, concerns, characteristics, summary;
+      if (imageBase64) {
+        const resp = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageBase64, mediaType }) });
+        const result = await resp.json();
+        d = result.skinType || SKIN_TYPES[Math.floor(Math.random() * SKIN_TYPES.length)];
+        score = result.score;
+        concerns = result.concerns;
+        characteristics = result.characteristics;
+        summary = result.summary;
+      } else {
+        d = manual || SKIN_TYPES[Math.floor(Math.random() * SKIN_TYPES.length)];
+      }
+      clearInterval(iv);
+      setAnalysisProgress(100);
+      setTimeout(() => {
           setSkinType(d);
           setAnalysisResult(d);
           setAnalysisStage("done");
           if (auth.currentUser) {
-            const entry = { id: 'analysis-' + Date.now(), date: new Date().toISOString(), result: d, score: ANALYSIS_RESULTS[d]?.score || 0, concerns: ANALYSIS_RESULTS[d]?.concerns || [], characteristics: ANALYSIS_RESULTS[d]?.characteristics || [] };
+            const entry = { id: 'analysis-' + Date.now(), date: new Date().toISOString(), result: d, score: score || ANALYSIS_RESULTS[d]?.score || 0, concerns: concerns || ANALYSIS_RESULTS[d]?.concerns || [], characteristics: characteristics || ANALYSIS_RESULTS[d]?.characteristics || [], summary: summary || '' };
             setAnalysisHistory(prev => {
               const updated = [entry, ...prev].slice(0, 20);
               saveUserData(auth.currentUser.uid, { analysisHistory: updated });
@@ -711,9 +724,12 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
             });
           }
         }, 350);
-      }
-      setAnalysisProgress(Math.min(p, 100));
-    }, 220);
+    } catch (error) {
+      clearInterval(iv);
+      setAnalysisProgress(0);
+      setAnalysisStage('idle');
+      console.error('Analysis error:', error);
+    }
   };
 
   const handleAnalysisUpload = (e) => {
