@@ -670,6 +670,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
           messages: safeHistory,
           skinType: skinType,
           userName: currentUser?.name,
+          analysisHistory: analysisHistory.slice(0, 5),
         }),
       });
       const data = await response.json();
