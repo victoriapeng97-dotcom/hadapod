@@ -747,6 +747,10 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
     );
     setShowAddToCollection(null);
     showNotif("Saved to collection ✓");
+    if (auth.currentUser) {
+      const updated = collections.map(c => c.id !== cid ? c : c.items.find(i => i.id === item.id) ? c : { ...c, items: [...c.items, item] });
+      saveUserData(auth.currentUser.uid, { collections: updated });
+    }
   };
   const removeFromCollection = (cid, iid) =>
     setCollections((prev) =>
