@@ -541,7 +541,7 @@ export default function HadaPod() {
   const [routine, setRoutine] = useState({ AM: {}, PM: {} });
   const [routineTime, setRoutineTime] = useState("AM");
   const [completedSteps, setCompletedSteps] = useState({ AM: {}, PM: {} });
-  const [routineSteps, setRoutineSteps] = useState({ AM: DEFAULT_ROUTINE_STEPS, PM: DEFAULT_ROUTINE_STEPS });
+  const [routineSteps, setRoutineSteps] = useState({ AM: [...DEFAULT_ROUTINE_STEPS], PM: [...DEFAULT_ROUTINE_STEPS] });
   const [editingStepId, setEditingStepId] = useState(null);
   const [editingStepName, setEditingStepName] = useState("");
   const [draggedStep, setDraggedStep] = useState(null);
