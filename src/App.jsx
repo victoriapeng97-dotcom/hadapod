@@ -464,6 +464,29 @@ export default function HadaPod() {
   });
   const [passwordVisible, setPasswordVisible] = useState(false);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userData = await getUserData(user.uid);
+        setCurrentUser({
+          name: userData?.name || user.displayName || 'Friend',
+          email: userData?.email || user.email,
+          avatar: (userData?.name || user.displayName || user.email || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2),
+          provider: user.providerData[0]?.providerId || 'email',
+        });
+        if (userData?.skinType) setSkinType(userData.skinType);
+        setIsLoggedIn(true);
+        if (userData?.onboardingComplete) {
+          setAuthScreen('app');
+          setActiveTab('home');
+        } else {
+          setAuthScreen('onboarding');
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   const [activeTab, setActiveTab] = useState("home");
   const [skinType, setSkinType] = useState(null);
   const [messages, setMessages] = useState([
