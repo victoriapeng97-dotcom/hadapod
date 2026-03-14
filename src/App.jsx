@@ -477,6 +477,7 @@ export default function HadaPod() {
         if (userData?.skinType) setSkinType(userData.skinType);
         if (userData?.starredItems) setStarredItems(userData.starredItems);
         if (userData?.collections) setCollections(userData.collections);
+        if (userData?.chatHistory) setChatHistory(userData.chatHistory);
         setIsLoggedIn(true);
         if (userData?.onboardingComplete) {
           setAuthScreen('app');
@@ -529,6 +530,9 @@ export default function HadaPod() {
   const [newFolderEmoji, setNewFolderEmoji] = useState("📁");
   const [activeCollection, setActiveCollection] = useState(null);
   const [starredItems, setStarredItems] = useState({});
+  const [chatHistory, setChatHistory] = useState([]);
+  const [activeChatId, setActiveChatId] = useState(null);
+  const [showChatDrawer, setShowChatDrawer] = useState(false);
   const [notification, setNotification] = useState(null);
   const [routine, setRoutine] = useState({ AM: {}, PM: {} });
   const [routineTime, setRoutineTime] = useState("AM");
@@ -3822,13 +3826,30 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
 
         {/* ══════════════ CHAT TAB ══════════════ */}
         {activeTab === "chat" && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              height: "calc(100vh - 170px)",
-            }}
-          >
+          <div style={{ display: "flex", flexDirection: "row", height: "calc(100vh - 170px)", position: "relative" }}>
+            {/* Chat History Drawer */}
+            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: showChatDrawer ? 260 : 0, overflow: "hidden", transition: "width 0.3s ease", background: "rgba(251,247,242,0.97)", backdropFilter: "blur(20px)", borderRight: "1px solid rgba(212,185,160,0.3)", zIndex: 10, display: "flex", flexDirection: "column" }}>
+              <div style={{ padding: "20px 16px 12px", borderBottom: "1px solid rgba(212,185,160,0.2)" }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, fontWeight: 700, color: "#2A2018", marginBottom: 12 }}>Chat History</div>
+                <button onClick={() => { setMessages([{ id: 1, from: "bot", text: "Hello, gorgeous! 🌸 I'm **Sora**, your personal skincare guide from HadaPod. Tell me about your skin concerns, ask about any ingredient, or send me a photo for an instant analysis!", cards: [] }]); setActiveChatId(null); setShowChatDrawer(false); }} style={{ width: "100%", padding: "10px", background: "linear-gradient(135deg,#C8877A,#D4956A)", border: "none", borderRadius: 12, color: "white", fontFamily: "'Jost',sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>+ New Chat</button>
+              </div>
+              <div style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
+                {chatHistory.map(chat => (
+                  <div key={chat.id} onClick={() => { setMessages(chat.messages); setActiveChatId(chat.id); setShowChatDrawer(false); }} style={{ padding: "10px 12px", borderRadius: 10, marginBottom: 4, cursor: "pointer", background: activeChatId === chat.id ? "rgba(200,135,122,0.15)" : "transparent", border: activeChatId === chat.id ? "1px solid rgba(200,135,122,0.3)" : "1px solid transparent" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(200,135,122,0.1)"}
+                    onMouseLeave={e => e.currentTarget.style.background = activeChatId === chat.id ? "rgba(200,135,122,0.15)" : "transparent"}
+                  >
+                    <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 600, color: "#2A2018", marginBottom: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{chat.title}</div>
+                    <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 10, color: "#A09080" }}>{new Date(chat.date).toLocaleDateString()}</div>
+                  </div>
+                ))}
+                {chatHistory.length === 0 && <div style={{ padding: "20px 12px", fontFamily: "'Jost',sans-serif", fontSize: 12, color: "#A09080", textAlign: "center" }}>No conversations yet</div>}
+              </div>
+            </div>
+            {/* Main chat area */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", marginLeft: showChatDrawer ? 260 : 0, transition: "margin-left 0.3s ease" }}>
+
+        
             <div
               style={{ flex: 1, overflowY: "auto", padding: "24px 20px 8px" }}
             >
@@ -4164,25 +4185,20 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                   backdropFilter: "blur(10px)",
                 }}
               >
+                 <button
+                  onClick={() => setShowChatDrawer(!showChatDrawer)}
+                  style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#C8A87A", padding: 0, lineHeight: 1, transition: "transform 0.2s", flexShrink: 0 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.15)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                  title="Chat history"
+                >
+                  🕐
+                </button>
                 <button
                   onClick={() => chatFileRef.current.click()}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 20,
-                    color: "#C8A87A",
-                    padding: 0,
-                    lineHeight: 1,
-                    transition: "transform 0.2s",
-                    flexShrink: 0,
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = "scale(1.15)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = "scale(1)")
-                  }
+                  style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#C8A87A", padding: 0, lineHeight: 1, transition: "transform 0.2s", flexShrink: 0 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.15)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                 >
                   📷
                 </button>
@@ -4230,6 +4246,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                   ↑
                 </button>
               </div>
+            </div>
             </div>
           </div>
         )}
