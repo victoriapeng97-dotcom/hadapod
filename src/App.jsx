@@ -432,15 +432,15 @@ const EMOJIS = [
   "💪",
   "🎯",
 ];
-const ROUTINE_STEPS = [
-  "Cleanser",
-  "Toner",
-  "Serum",
-  "Moisturizer",
-  "SPF",
-  "Eye Cream",
-  "Facial Oil",
-  "Exfoliant",
+const DEFAULT_ROUTINE_STEPS = [
+  { id: "s1", name: "Cleanser", emoji: "🧴" },
+  { id: "s2", name: "Toner", emoji: "💧" },
+  { id: "s3", name: "Serum", emoji: "✨" },
+  { id: "s4", name: "Moisturizer", emoji: "🌿" },
+  { id: "s5", name: "SPF", emoji: "☀️" },
+  { id: "s6", name: "Eye Cream", emoji: "👁" },
+  { id: "s7", name: "Facial Oil", emoji: "🌸" },
+  { id: "s8", name: "Exfoliant", emoji: "🔬" },
 ];
 
 export default function HadaPod() {
@@ -479,6 +479,8 @@ export default function HadaPod() {
         if (userData?.collections) setCollections(userData.collections);
         if (userData?.chatHistory) setChatHistory(userData.chatHistory);
         if (userData?.analysisHistory) setAnalysisHistory(userData.analysisHistory);
+        if (userData?.routineSteps) setRoutineSteps(userData.routineSteps);
+        if (userData?.routine) setRoutine(userData.routine);
         setIsLoggedIn(true);
         if (userData?.onboardingComplete) {
           setAuthScreen('app');
@@ -541,6 +543,13 @@ export default function HadaPod() {
   const [routine, setRoutine] = useState({ AM: {}, PM: {} });
   const [routineTime, setRoutineTime] = useState("AM");
   const [completedSteps, setCompletedSteps] = useState({ AM: {}, PM: {} });
+  const [routineSteps, setRoutineSteps] = useState({ AM: DEFAULT_ROUTINE_STEPS, PM: DEFAULT_ROUTINE_STEPS });
+  const [editingStepId, setEditingStepId] = useState(null);
+  const [editingStepName, setEditingStepName] = useState("");
+  const [draggedStep, setDraggedStep] = useState(null);
+  const [showAddStep, setShowAddStep] = useState(false);
+  const [newStepName, setNewStepName] = useState("");
+  const [showAddToRoutine, setShowAddToRoutine] = useState(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
