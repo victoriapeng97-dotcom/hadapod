@@ -519,6 +519,7 @@ export default function HadaPod() {
     chin: null,
   });
   const [activeSlot, setActiveSlot] = useState(null);
+  const [photoSlotsBase64, setPhotoSlotsBase64] = useState({});
   const slotFileRef = useRef();
   const [collections, setCollections] = useState([
     { id: "c1", name: "My Favourites", emoji: "⭐", items: [] },
@@ -687,7 +688,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
     e.target.value = "";
   };
 
-  const runAnalysis = async (manual, imageBase64, mediaType) => {
+  const runAnalysis = async (manual, imageBase64, mediaType, additionalImages) => {
     setAnalysisStage("analyzing");
     setAnalysisProgress(0);
     let p = 0;
@@ -699,7 +700,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
     try {
       let d, score, concerns, characteristics, summary;
       if (imageBase64) {
-        const resp = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageBase64, mediaType }) });
+        const resp = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageBase64, mediaType, additionalImages: additionalImages || [] }) });
         const result = await resp.json();
         d = result.skinType || SKIN_TYPES[Math.floor(Math.random() * SKIN_TYPES.length)];
         score = result.score;
