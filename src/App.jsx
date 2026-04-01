@@ -478,6 +478,12 @@ export default function HadaPod() {
         if (userData?.starredItems) setStarredItems(userData.starredItems);
         if (userData?.collections) setCollections(userData.collections);
         if (userData?.chatHistory) setChatHistory(userData.chatHistory);
+        const today = new Date().toISOString().slice(0, 10);
+        if (userData?.dailyMessages?.date === today) {
+          setDailyMessageCount(userData.dailyMessages.count);
+        } else {
+          setDailyMessageCount(0);
+        }
         if (userData?.analysisHistory) setAnalysisHistory(userData.analysisHistory);
         setIsLoggedIn(true);
         if (userData?.onboardingComplete) {
@@ -535,6 +541,9 @@ export default function HadaPod() {
   const [chatHistory, setChatHistory] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [showChatDrawer, setShowChatDrawer] = useState(false);
+  const [dailyMessageCount, setDailyMessageCount] = useState(0);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const FREE_DAILY_LIMIT = 10;
   const [analysisHistory, setAnalysisHistory] = useState([]);
   const [showProgressView, setShowProgressView] = useState(false);
   const [notification, setNotification] = useState(null);
@@ -659,6 +668,11 @@ export default function HadaPod() {
     const text = overrideText !== undefined ? overrideText : chatInput.trim();
     const photo = overridePhoto !== undefined ? overridePhoto : chatPhotoPreview;
     if (!text && !photo) return;
+    const isPro = currentUser?.isPro || false;
+    if (!isPro && dailyMessageCount >= FREE_DAILY_LIMIT) {
+      setShowUpgradePrompt(true);
+      return;
+    }
     const userMessage = { id: Date.now(), from: "user", text: text || "", photo, cards: [] };
     setMessages((prev) => [...prev, userMessage]);
     setChatInput("");
@@ -4209,6 +4223,16 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                 padding: "14px 20px",
               }}
             >
+              {!(currentUser?.isPro) && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, color: dailyMessageCount >= FREE_DAILY_LIMIT ? "#D4878A" : "#A09080" }}>
+                    {dailyMessageCount >= FREE_DAILY_LIMIT ? "Daily limit reached ·" : ""} {FREE_DAILY_LIMIT - dailyMessageCount} free messages remaining today
+                  </div>
+                  {dailyMessageCount >= FREE_DAILY_LIMIT - 2 && (
+                    <button onClick={() => setShowUpgradePrompt(true)} style={{ background: "none", border: "none", fontFamily: "'Jost',sans-serif", fontSize: 11, color: "#C8877A", fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>Upgrade to Pro</button>
+                  )}
+                </div>
+              )}
               <div
                 style={{
                   display: "flex",
@@ -6024,6 +6048,34 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                 </div>
               </div>
             </div>
+            {showUpgradePrompt && (
+              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }} onClick={() => setShowUpgradePrompt(false)}>
+                <div style={{ background: "#FBF7F2", borderRadius: 28, padding: "40px 32px", maxWidth: 420, width: "100%", textAlign: "center" }} onClick={e => e.stopPropagation()}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>🌸</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 700, color: "#2A2018", marginBottom: 8 }}>You've reached your daily limit</div>
+                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: "#8A7060", lineHeight: 1.7, marginBottom: 28 }}>Free users get 10 messages with Sora per day. Upgrade to HadaPod Pro for unlimited access, priority responses, and exclusive features.</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+                    <div style={{ background: "linear-gradient(135deg,#C8877A,#D4956A)", borderRadius: 20, padding: "20px 24px", color: "white", textAlign: "left" }}>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>HadaPod Pro</div>
+                      <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, opacity: 0.9, marginBottom: 12 }}>Unlimited Sora messages · Advanced analysis · Priority support</div>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 12, padding: "10px 16px", flex: 1, textAlign: "center" }}>
+                          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, fontWeight: 700 }}>$10</div>
+                          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, opacity: 0.9 }}>per month</div>
+                        </div>
+                        <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 12, padding: "10px 16px", flex: 1, textAlign: "center", border: "2px solid rgba(255,255,255,0.5)" }}>
+                          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, fontWeight: 700 }}>$200</div>
+                          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, opacity: 0.9 }}>per year · Save $20</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowUpgradePrompt(false)} style={{ width: "100%", padding: "14px", background: "linear-gradient(135deg,#C8877A,#D4956A)", border: "none", borderRadius: 16, color: "white", fontFamily: "'Jost',sans-serif", fontSize: 15, fontWeight: 600, cursor: "pointer", marginBottom: 10 }}>Upgrade to Pro ✨</button>
+                  <button onClick={() => setShowUpgradePrompt(false)} style={{ width: "100%", padding: "12px", background: "none", border: "none", fontFamily: "'Jost',sans-serif", fontSize: 13, color: "#A09080", cursor: "pointer" }}>Maybe later</button>
+                </div>
+              </div>
+            )}
+
             {showAddToRoutine && (
               <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setShowAddToRoutine(null)}>
                 <div style={{ background: "#FBF7F2", borderRadius: "24px 24px 0 0", padding: "28px 24px", width: "100%", maxWidth: 480 }} onClick={e => e.stopPropagation()}>

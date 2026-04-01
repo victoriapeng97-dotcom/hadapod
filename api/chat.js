@@ -1,18 +1,44 @@
+import { initializeApp, getApps } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { credential } from "firebase-admin";
+
+if (!getApps().length) {
+  initializeApp({ credential: credential.applicationDefault() });
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
   try {
-    const { messages, skinType, userName, analysisHistory } = req.body;
+    const { messages, skinType, userName, analysisHistory, userId } = req.body;
     const cleanMessages = (messages || []).filter(
       (m) => m && m.role && m.content && m.content.trim() !== ""
     );
-    if (cleanMessages.length === 0) {
-      return res.status(400).json({ error: "No valid messages" });
+    if (cleanMessages.length === 0) return res.status(400).json({ error: "No valid messages" });
+
+    // Check message limit for free users
+    if (userId) {
+      const db = getFirestore();
+      const today = new Date().toISOString().slice(0, 10);
+      const userRef = db.collection("users").doc(userId);
+      const userDoc = await userRef.get();
+      const userData = userDoc.data() || {};
+      const isPro = userData.isPro || false;
+
+      if (!isPro) {
+        const dailyCount = userData.dailyMessages?.date === today ? userData.dailyMessages.count : 0;
+        if (dailyCount >= 10) {
+          return res.status(429).json({ error: "Daily limit reached", limitReached: true });
+        }
+        await userRef.update({
+          dailyMessages: { date: today, count: dailyCount + 1 }
+        });
+      }
     }
 
     const analysisContext = analysisHistory && analysisHistory.length > 0
-      ? `\n\nUSER'S SKIN ANALYSIS HISTORY (most recent first):\n${analysisHistory.map(a => `- ${a.date.slice(0,10)}: ${a.result} skin type, score ${a.score}/100, concerns: ${a.concerns.join(', ')}, characteristics: ${a.characteristics.join(', ')}${a.summary ? ', summary: ' + a.summary : ''}`).join('\n')}`
+      ? `\n\nUSER'S SKIN ANALYSIS HISTORY:\n${analysisHistory.map(a => `- ${a.date.slice(0,10)}: ${a.result} skin, score ${a.score}/100, concerns: ${a.concerns.join(', ')}`).join('\n')}`
       : "";
 
     const system = `You are Sora, HadaPod's expert AI skincare advisor. You combine the warmth of a trusted friend with the knowledge of a dermatologist and cosmetic chemist.
@@ -38,18 +64,8 @@ After your conversational response, if you recommend specific products add this 
 PRODUCTS: followed by a JSON array like [{"name":"Product Name","brand":"Brand","ingredient":"Key Ingredient","why":"Why it works","emoji":"🧴","tag":"Hydration Hero","type":"product","category":"Moisturizer"}]
 - Include 2-3 products max
 - tag must be one of: Gold Standard, Universal, Hydration Hero, Acne Fighter, Barrier Essential, Brightening, Sensitive Safe, Resurfacing
-- Only include PRODUCTS block when recommending specific products, not for general advice
-
-YOUR KNOWLEDGE BASE:
-- Deep knowledge of cosmetic chemistry (actives, pH, formulation)
-- Understanding of skin barrier function, microbiome, inflammation
-- Evidence-based recommendations with clinical backing
-- Knowledge of ingredient interactions and layering order
-- Awareness of different skin tones, ages, and conditions
 ${skinType ? `\nUSER'S SKIN TYPE: ${skinType}` : ""}
-${userName ? `USER'S NAME: ${userName}` : ""}${analysisContext}
-
-Remember: You're not a search engine returning results — you're a thoughtful advisor having a real conversation about someone's skin health.`;
+${userName ? `USER'S NAME: ${userName}` : ""}${analysisContext}`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -71,9 +87,7 @@ Remember: You're not a search engine returning results — you're a thoughtful a
         products = JSON.parse(productMatch[1]);
         products = products.map((p, i) => ({ ...p, id: "sora-" + Date.now() + "-" + i }));
         reply = fullText.replace(/PRODUCTS:[\s\S]*/, "").trim();
-      } catch (e) {
-        products = [];
-      }
+      } catch (e) { products = []; }
     }
     return res.status(200).json({ reply, products });
   } catch (error) {
