@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+// PWA viewport fix
 import { signInWithGoogle, logOut, saveUserData, getUserData, auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
