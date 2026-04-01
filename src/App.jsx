@@ -1021,6 +1021,8 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
           flexDirection: "column",
           alignItems: "center",
           overflow: "hidden",
+          width: "100%",
+          maxWidth: "100vw",
         }}
       >
         <style>{SHARED_STYLE}</style>
@@ -2378,6 +2380,12 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
         .dot:nth-child(3){animation-delay:.4s;background:#C8A87A}
         @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
         .hscroll{display:flex;gap:14px;overflow-x:auto;padding:4px 4px 12px}
+        * { box-sizing: border-box; }
+        body { overflow-x: hidden; width: 100%; }
+        @media (max-width: 768px) {
+          main { width: 100vw; overflow-x: hidden; }
+          .fade-in { width: 100%; overflow-x: hidden; }
+        }
         .hscroll::-webkit-scrollbar{height:3px}
         .hscroll::-webkit-scrollbar-thumb{background:rgba(200,135,122,0.3);border-radius:10px}
         input:focus,textarea:focus{outline:none;}
@@ -2925,12 +2933,12 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
       </nav>
 
       {/* ══ MAIN CONTENT AREA ══ */}
-      <main style={{ paddingBottom: 40 }}>
+      <main style={{ paddingBottom: 40, width: "100%", maxWidth: "100vw", overflowX: "hidden" }}>
         {/* ══════════════ HOME TAB ══════════════ */}
         {activeTab === "home" && (
           <div
             className="fade-in"
-            style={{ maxWidth: 960, margin: "0 auto", padding: "0 0 48px" }}
+            style={{ maxWidth: 960, margin: "0 auto", padding: "0 0 48px", width: "100%", overflowX: "hidden" }}
           >
             {/* ── Hero Banner ── */}
             <div
@@ -2939,7 +2947,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                 overflow: "hidden",
                 background:
                   "linear-gradient(135deg,#E8C4BC 0%,#F0D8C8 40%,#EDD8C0 70%,#E8D4B8 100%)",
-                padding: "52px 40px 48px",
+                padding: "clamp(24px, 5vw, 52px) clamp(16px, 4vw, 40px) clamp(24px, 5vw, 48px)",
                 marginBottom: 32,
               }}
             >
@@ -2978,7 +2986,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                 }}
               />
 
-              <div style={{ position: "relative", zIndex: 1, maxWidth: 520 }}>
+              <div style={{ position: "relative", zIndex: 1, maxWidth: "min(520px, 100%)" }}>
                 <div
                   style={{
                     display: "inline-flex",
