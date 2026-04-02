@@ -528,6 +528,7 @@ export default function HadaPod() {
   });
   const [activeSlot, setActiveSlot] = useState(null);
   const [photoSlotsBase64, setPhotoSlotsBase64] = useState({});
+  const [analysisMode, setAnalysisMode] = useState("detailed");
   const slotFileRef = useRef();
   const [collections, setCollections] = useState([
     { id: "c1", name: "My Favourites", emoji: "⭐", items: [] },
@@ -4447,7 +4448,51 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                 gap: 20,
               }}
             >
+              {/* Mode Toggle */}
+              <div style={{ display: "flex", background: "rgba(255,255,255,0.6)", border: "1px solid rgba(212,184,150,0.3)", borderRadius: 16, padding: 4, marginBottom: 4 }}>
+                <button onClick={() => setAnalysisMode("quick")} style={{ flex: 1, padding: "10px", background: analysisMode === "quick" ? "linear-gradient(135deg,#C8877A,#D4956A)" : "transparent", color: analysisMode === "quick" ? "#fff" : "#8A7060", border: "none", borderRadius: 12, cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, fontWeight: analysisMode === "quick" ? 600 : 400, transition: "all 0.3s" }}>
+                  ⚡ Quick Analysis
+                </button>
+                <button onClick={() => setAnalysisMode("detailed")} style={{ flex: 1, padding: "10px", background: analysisMode === "detailed" ? "linear-gradient(135deg,#C8877A,#D4956A)" : "transparent", color: analysisMode === "detailed" ? "#fff" : "#8A7060", border: "none", borderRadius: 12, cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, fontWeight: analysisMode === "detailed" ? 600 : 400, transition: "all 0.3s" }}>
+                  🔬 Detailed Analysis
+                </button>
+              </div>
+
+              {/* Quick Upload Mode */}
+              {analysisMode === "quick" && (
+                <div style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(16px)", border: "1px solid rgba(212,184,150,0.3)", borderRadius: 24, padding: 28, boxShadow: "0 8px 40px rgba(160,110,80,0.1)" }}>
+                  <div style={{ fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "#B8A090", fontFamily: "'Jost',sans-serif", fontWeight: 600, marginBottom: 6 }}>Quick Photo Analysis</div>
+                  <div style={{ fontSize: 13, color: "#8A7060", fontFamily: "'Jost',sans-serif", marginBottom: 20, lineHeight: 1.6 }}>Upload a single clear photo of your full face in natural light for a quick skin assessment.</div>
+                  <input ref={analysisFileRef} type="file" accept="image/*" onChange={(e) => {
+                    const f = e.target.files[0];
+                    if (!f) return;
+                    const url = URL.createObjectURL(f);
+                    setUploadedImage(url);
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      const base64 = ev.target.result.split(',')[1];
+                      const mediaType = f.type || 'image/jpeg';
+                      setPhotoSlotsBase64({ fullFace: { base64, mediaType } });
+                      window._lastSlots = { fullFace: { base64, mediaType } };
+                      runAnalysis(null, base64, mediaType, []);
+                    };
+                    reader.readAsDataURL(f);
+                  }} style={{ display: "none" }} />
+                  {uploadedImage ? (
+                    <div style={{ textAlign: "center" }}>
+                      <img src={uploadedImage} alt="face" style={{ width: "100%", maxHeight: 300, objectFit: "cover", borderRadius: 16, marginBottom: 16 }} />
+                      <button onClick={() => { setUploadedImage(null); setPhotoSlotsBase64({}); setAnalysisStage("idle"); }} style={{ background: "none", border: "none", color: "#C8877A", fontFamily: "'Jost',sans-serif", fontSize: 13, cursor: "pointer" }}>Retake photo</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => analysisFileRef.current.click()} style={{ width: "100%", padding: "20px", background: "rgba(200,135,122,0.08)", border: "2px dashed rgba(200,135,122,0.4)", borderRadius: 16, cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 14, color: "#C8877A", fontWeight: 600 }}>
+                      📸 Upload Full Face Photo
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Upload Panel — Guided Multi-Photo */}
+              {analysisMode === "detailed" && (
               <div
                 style={{
                   background: "rgba(255,255,255,0.7)",
@@ -5095,6 +5140,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Results */}
               {analysisStage === "done" && analysisData && (
