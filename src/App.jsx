@@ -730,6 +730,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
         concerns = result.concerns;
         characteristics = result.characteristics;
         summary = result.summary;
+        window._lastAnalysis = result;
       } else {
         d = manual || SKIN_TYPES[Math.floor(Math.random() * SKIN_TYPES.length)];
       }
@@ -740,7 +741,8 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
           setAnalysisResult(d);
           setAnalysisStage("done");
           if (auth.currentUser) {
-            const entry = { id: 'analysis-' + Date.now(), date: new Date().toISOString(), result: d, score: score || ANALYSIS_RESULTS[d]?.score || 0, concerns: concerns || ANALYSIS_RESULTS[d]?.concerns || [], characteristics: characteristics || ANALYSIS_RESULTS[d]?.characteristics || [], summary: summary || '' };
+            const fullResult = window._lastAnalysis || {};
+            const entry = { id: 'analysis-' + Date.now(), date: new Date().toISOString(), result: d, score: score || ANALYSIS_RESULTS[d]?.score || 0, concerns: concerns || ANALYSIS_RESULTS[d]?.concerns || [], characteristics: characteristics || ANALYSIS_RESULTS[d]?.characteristics || [], summary: summary || '', zoneAnalysis: fullResult.zoneAnalysis || {}, keyIngredients: fullResult.keyIngredients || [], recommendations: fullResult.recommendations || [] };
             setAnalysisHistory(prev => {
               const updated = [entry, ...prev].slice(0, 20);
               saveUserData(auth.currentUser.uid, { analysisHistory: updated });
@@ -3349,7 +3351,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                           </div>
                         </div>
                       </div>
-                      {ANALYSIS_RESULTS[skinType].characteristics.map(
+                      {(analysisHistory[0]?.characteristics?.length ? analysisHistory[0].characteristics : ANALYSIS_RESULTS[skinType]?.characteristics || []).map(
                         (c, i) => (
                           <div
                             key={i}
@@ -3368,7 +3370,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                                 width: 5,
                                 height: 5,
                                 borderRadius: "50%",
-                                background: ANALYSIS_RESULTS[skinType].color,
+                                background: ANALYSIS_RESULTS[skinType]?.color || "#C8877A",
                                 flexShrink: 0,
                               }}
                             />
@@ -3400,7 +3402,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                       >
                         Key Concerns
                       </div>
-                      {ANALYSIS_RESULTS[skinType].concerns.map((c, i) => (
+                      {(analysisHistory[0]?.concerns?.length ? analysisHistory[0].concerns : ANALYSIS_RESULTS[skinType]?.concerns || []).map((c, i) => (
                         <div
                           key={i}
                           style={{
@@ -3425,6 +3427,22 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                           {c}
                         </div>
                       ))}
+                      {analysisHistory[0]?.summary && (
+                        <div style={{ marginTop: 12, padding: "10px 14px", background: "rgba(255,255,255,0.6)", borderRadius: 12, fontSize: 11, color: "#6A5A4A", fontFamily: "'Jost',sans-serif", lineHeight: 1.6, border: "1px solid rgba(212,184,150,0.2)" }}>
+                          {analysisHistory[0].summary}
+                        </div>
+                      )}
+                      {analysisHistory[0]?.keyIngredients?.length > 0 && (
+                        <div style={{ marginTop: 12 }}>
+                          <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "#B8A090", fontFamily: "'Jost',sans-serif", fontWeight: 600, marginBottom: 8 }}>Recommended Ingredients</div>
+                          {analysisHistory[0].keyIngredients.map((ing, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6, fontSize: 11, fontFamily: "'Jost',sans-serif", color: "#6A5A4A" }}>
+                              <span style={{ color: "#C8877A", flexShrink: 0 }}>✦</span>
+                              {ing}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <div
                         style={{
                           marginTop: 16,
