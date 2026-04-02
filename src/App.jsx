@@ -5924,30 +5924,55 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                 {/* Timeline */}
                 <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 24, padding: "24px", border: "1px solid rgba(212,185,160,0.3)" }}>
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 700, color: "#2A2018", marginBottom: 20 }}>Analysis Timeline</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                     {analysisHistory.map((a, i) => (
-                      <div key={a.id} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
-                          <div style={{ width: 12, height: 12, borderRadius: "50%", background: i === 0 ? "#C8877A" : "#D4B896", flexShrink: 0, marginTop: 4 }} />
-                          {i < analysisHistory.length - 1 && <div style={{ width: 2, height: 40, background: "rgba(212,185,160,0.4)" }} />}
-                        </div>
-                        <div style={{ flex: 1, background: i === 0 ? "rgba(200,135,122,0.08)" : "rgba(255,255,255,0.5)", borderRadius: 16, padding: "14px 18px", border: i === 0 ? "1px solid rgba(200,135,122,0.3)" : "1px solid rgba(212,185,160,0.2)" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, fontWeight: 700, color: "#2A2018" }}>{a.result} Skin {i === 0 ? "· Latest" : ""}</div>
-                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, color: "#A09080" }}>{new Date(a.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                      <div key={a.id} style={{ background: i === 0 ? "rgba(200,135,122,0.06)" : "rgba(255,255,255,0.6)", borderRadius: 20, border: i === 0 ? "1px solid rgba(200,135,122,0.25)" : "1px solid rgba(212,185,160,0.2)", overflow: "hidden" }}>
+                        {/* Header */}
+                        <div style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontWeight: 700, color: "#2A2018" }}>{a.result} Skin {i === 0 ? <span style={{ fontSize: 12, color: "#C8877A", fontFamily: "'Jost',sans-serif" }}>· Latest</span> : ""}</div>
+                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, color: "#A09080", marginTop: 2 }}>{new Date(a.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
                           </div>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-                            {a.concerns.map((c, j) => (
-                              <span key={j} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "rgba(212,185,160,0.2)", fontFamily: "'Jost',sans-serif", color: "#8A7060" }}>{c}</span>
+                          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 22, fontWeight: 700, color: i === 0 ? "#C8877A" : "#A09080" }}>{a.score}<span style={{ fontSize: 12 }}>/100</span></div>
+                        </div>
+                        {/* Score bar */}
+                        <div style={{ padding: "0 18px 12px" }}>
+                          <div style={{ height: 6, borderRadius: 3, background: "rgba(212,185,160,0.3)", overflow: "hidden" }}>
+                            <div style={{ width: `${a.score}%`, height: "100%", background: "linear-gradient(90deg,#C8877A,#D4956A)", borderRadius: 3 }} />
+                          </div>
+                        </div>
+                        {/* Photos */}
+                        {a.photoUrls && Object.keys(a.photoUrls).length > 0 && (
+                          <div style={{ padding: "0 18px 14px", display: "flex", gap: 8, overflowX: "auto" }}>
+                            {Object.entries(a.photoUrls).map(([zone, url]) => (
+                              <div key={zone} style={{ flexShrink: 0, textAlign: "center" }}>
+                                <img src={url} alt={zone} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 12, border: "1px solid rgba(212,185,160,0.3)" }} />
+                                <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 9, color: "#A09080", marginTop: 4, textTransform: "capitalize" }}>{zone.replace(/([A-Z])/g, ' $1').trim()}</div>
+                              </div>
                             ))}
                           </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <div style={{ flex: 1, height: 6, borderRadius: 3, background: "rgba(212,185,160,0.3)", overflow: "hidden" }}>
-                              <div style={{ width: `${a.score}%`, height: "100%", background: "linear-gradient(90deg,#C8877A,#D4956A)", borderRadius: 3 }} />
-                            </div>
-                            <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 700, color: "#C8877A" }}>{a.score}/100</span>
-                          </div>
+                        )}
+                        {/* Concerns */}
+                        <div style={{ padding: "0 18px 14px", display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          {a.concerns.map((c, j) => (
+                            <span key={j} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "rgba(212,185,160,0.2)", fontFamily: "'Jost',sans-serif", color: "#8A7060" }}>{c}</span>
+                          ))}
                         </div>
+                        {/* Summary */}
+                        {a.summary && (
+                          <div style={{ padding: "0 18px 16px", fontFamily: "'Jost',sans-serif", fontSize: 12, color: "#6A5A4A", lineHeight: 1.6, fontStyle: "italic" }}>{a.summary}</div>
+                        )}
+                        {/* Key ingredients */}
+                        {a.keyIngredients?.length > 0 && (
+                          <div style={{ padding: "12px 18px 16px", borderTop: "1px solid rgba(212,185,160,0.15)" }}>
+                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#B8A090", marginBottom: 8 }}>Recommended Ingredients</div>
+                            {a.keyIngredients.map((ing, j) => (
+                              <div key={j} style={{ display: "flex", gap: 6, marginBottom: 4, fontSize: 11, fontFamily: "'Jost',sans-serif", color: "#6A5A4A" }}>
+                                <span style={{ color: "#C8877A", flexShrink: 0 }}>✦</span>{ing}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
