@@ -788,6 +788,14 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
     const url = URL.createObjectURL(f);
     setPhotoSlots((prev) => ({ ...prev, [activeSlot]: url }));
     setUploadedImage(url);
+    const slot = activeSlot;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result.split(',')[1];
+      const mediaType = f.type || 'image/jpeg';
+      setPhotoSlotsBase64(prev => ({ ...prev, [slot]: { base64, mediaType } }));
+    };
+    reader.readAsDataURL(f);
     e.target.value = "";
   };
 
