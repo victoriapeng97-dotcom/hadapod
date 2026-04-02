@@ -4418,7 +4418,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
               style={{
                 display: "grid",
                 gridTemplateColumns:
-                  analysisStage === "done" ? "1fr 1fr" : "1fr",
+                  "1fr",
                 gap: 20,
               }}
             >
