@@ -4888,7 +4888,15 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                   <button
                     disabled={photosUploaded === 0 && analysisStage !== "done"}
                     onClick={() => {
-                      if (photosUploaded > 0) runAnalysis(null);
+                      if (photosUploaded > 0) {
+                        window._lastSlots = photoSlotsBase64;
+                        const slots = Object.values(photoSlotsBase64);
+                        if (slots.length > 0) {
+                          runAnalysis(null, slots[0].base64, slots[0].mediaType, slots.slice(1));
+                        } else {
+                          runAnalysis(null);
+                        }
+                      }
                     }}
                     style={{
                       flex: 1,
