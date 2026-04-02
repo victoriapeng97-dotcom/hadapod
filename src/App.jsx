@@ -4889,6 +4889,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                     disabled={photosUploaded === 0 && analysisStage !== "done"}
                     onClick={() => {
                       if (photosUploaded > 0) {
+                        console.log('photoSlotsBase64:', photoSlotsBase64);
                         window._lastSlots = photoSlotsBase64;
                         const slots = Object.values(photoSlotsBase64);
                         if (slots.length > 0) {
