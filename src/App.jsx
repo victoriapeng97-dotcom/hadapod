@@ -2380,11 +2380,13 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
         .dot:nth-child(3){animation-delay:.4s;background:#C8A87A}
         @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
         .hscroll{display:flex;gap:14px;overflow-x:auto;padding:4px 4px 12px}
-        * { box-sizing: border-box; }
-        body { overflow-x: hidden; width: 100%; }
+        * { box-sizing: border-box; max-width: 100%; }
+        html, body { overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
+        #root { width: 100%; overflow-x: hidden; }
         @media (max-width: 768px) {
-          main { width: 100vw; overflow-x: hidden; }
-          .fade-in { width: 100%; overflow-x: hidden; }
+          main { width: 100vw !important; max-width: 100vw !important; overflow-x: hidden !important; }
+          .fade-in { width: 100% !important; max-width: 100vw !important; overflow-x: hidden !important; padding-left: 16px !important; padding-right: 16px !important; }
+          nav { width: 100vw !important; max-width: 100vw !important; overflow-x: hidden !important; }
         }
         .hscroll::-webkit-scrollbar{height:3px}
         .hscroll::-webkit-scrollbar-thumb{background:rgba(200,135,122,0.3);border-radius:10px}
@@ -2860,8 +2862,10 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
           backdropFilter: "blur(24px)",
           borderBottom: "1px solid rgba(212,184,150,0.25)",
           display: "flex",
-          padding: "0 24px",
+          padding: "0",
           overflowX: "auto",
+          width: "100%",
+          maxWidth: "100vw",
         }}
       >
         {tabs.map((t) => (
@@ -2871,6 +2875,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
             onClick={() => setActiveTab(t.id)}
             style={{
               flex: 1,
+              minWidth: 0,
               background: "transparent",
               border: "none",
               borderBottom:
@@ -2881,17 +2886,16 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: 6,
-              padding: "14px 12px",
-              minWidth: 100,
+              gap: 4,
+              padding: "10px 4px",
               transition: "all 0.25s cubic-bezier(0.22,1,0.36,1)",
             }}
           >
             <div
               style={{
-                width: 46,
-                height: 46,
-                borderRadius: 16,
+                width: 36,
+                height: 36,
+                borderRadius: 12,
                 background:
                   activeTab === t.id
                     ? "linear-gradient(135deg,#C8877A,#D4956A)"
@@ -2908,7 +2912,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
             >
               <span
                 style={{
-                  fontSize: 22,
+                  fontSize: 16,
                   color: activeTab === t.id ? "#fff" : "#B8A090",
                 }}
               >
@@ -2917,13 +2921,16 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
             </div>
             <span
               style={{
-                fontSize: 10,
-                letterSpacing: "0.07em",
+                fontSize: 8,
+                letterSpacing: "0.04em",
                 textTransform: "uppercase",
                 color: activeTab === t.id ? "#C8877A" : "#B8A090",
                 fontFamily: "'Jost',sans-serif",
                 fontWeight: activeTab === t.id ? 600 : 400,
                 whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: "100%",
               }}
             >
               {t.label}
