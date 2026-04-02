@@ -486,6 +486,7 @@ export default function HadaPod() {
           setDailyMessageCount(0);
         }
         if (userData?.analysisHistory) setAnalysisHistory(userData.analysisHistory);
+        if (userData?.archivedAnalyses) setArchivedAnalyses(userData.archivedAnalyses);
         setIsLoggedIn(true);
         if (userData?.onboardingComplete) {
           setAuthScreen('app');
@@ -547,6 +548,8 @@ export default function HadaPod() {
   const FREE_DAILY_LIMIT = 10;
   const [analysisHistory, setAnalysisHistory] = useState([]);
   const [showProgressView, setShowProgressView] = useState(false);
+  const [archivedAnalyses, setArchivedAnalyses] = useState([]);
+  const [showArchived, setShowArchived] = useState(false);
   const [notification, setNotification] = useState(null);
   const [routine, setRoutine] = useState({ AM: {}, PM: {} });
   const [routineTime, setRoutineTime] = useState("AM");
@@ -5929,11 +5932,29 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                       <div key={a.id} style={{ background: i === 0 ? "rgba(200,135,122,0.06)" : "rgba(255,255,255,0.6)", borderRadius: 20, border: i === 0 ? "1px solid rgba(200,135,122,0.25)" : "1px solid rgba(212,185,160,0.2)", overflow: "hidden" }}>
                         {/* Header */}
                         <div style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
+                          <div style={{ flex: 1 }}>
                             <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontWeight: 700, color: "#2A2018" }}>{a.result} Skin {i === 0 ? <span style={{ fontSize: 12, color: "#C8877A", fontFamily: "'Jost',sans-serif" }}>· Latest</span> : ""}</div>
                             <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, color: "#A09080", marginTop: 2 }}>{new Date(a.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
                           </div>
-                          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 22, fontWeight: 700, color: i === 0 ? "#C8877A" : "#A09080" }}>{a.score}<span style={{ fontSize: 12 }}>/100</span></div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 22, fontWeight: 700, color: i === 0 ? "#C8877A" : "#A09080" }}>{a.score}<span style={{ fontSize: 12 }}>/100</span></div>
+                            <button onClick={() => {
+                              const updated = archivedAnalyses.concat(a);
+                              const newHistory = analysisHistory.filter(x => x.id !== a.id);
+                              setArchivedAnalyses(updated);
+                              setAnalysisHistory(newHistory);
+                              if (auth.currentUser) saveUserData(auth.currentUser.uid, { analysisHistory: newHistory, archivedAnalyses: updated });
+                              showNotif("Analysis archived ✓");
+                            }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#B8A090", padding: 4 }} title="Archive">📦</button>
+                            <button onClick={() => {
+                              if (window.confirm("Delete this analysis? This cannot be undone.")) {
+                                const newHistory = analysisHistory.filter(x => x.id !== a.id);
+                                setAnalysisHistory(newHistory);
+                                if (auth.currentUser) saveUserData(auth.currentUser.uid, { analysisHistory: newHistory });
+                                showNotif("Analysis deleted");
+                              }
+                            }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#D4878A", padding: 4 }} title="Delete">🗑️</button>
+                          </div>
                         </div>
                         {/* Score bar */}
                         <div style={{ padding: "0 18px 12px" }}>
@@ -5997,6 +6018,46 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                         🌿 Your skin score improved by {analysisHistory[0].score - analysisHistory[analysisHistory.length - 1].score} points!
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Archived Analyses */}
+            {archivedAnalyses.length > 0 && (
+              <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 24, padding: "24px", border: "1px solid rgba(212,185,160,0.3)", marginTop: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 700, color: "#2A2018" }}>Archived 📦</div>
+                  <button onClick={() => setShowArchived(!showArchived)} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 12, color: "#C8877A", fontWeight: 600 }}>{showArchived ? "Hide" : "Show all"}</button>
+                </div>
+                {showArchived && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {archivedAnalyses.map((a) => (
+                      <div key={a.id} style={{ background: "rgba(255,255,255,0.5)", borderRadius: 16, padding: "14px 18px", border: "1px solid rgba(212,185,160,0.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 15, fontWeight: 700, color: "#6A5A4A" }}>{a.result} Skin · {a.score}/100</div>
+                          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, color: "#A09080" }}>{new Date(a.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => {
+                            const newHistory = [a, ...analysisHistory];
+                            const newArchived = archivedAnalyses.filter(x => x.id !== a.id);
+                            setAnalysisHistory(newHistory);
+                            setArchivedAnalyses(newArchived);
+                            if (auth.currentUser) saveUserData(auth.currentUser.uid, { analysisHistory: newHistory, archivedAnalyses: newArchived });
+                            showNotif("Restored ✓");
+                          }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#C8877A", fontFamily: "'Jost',sans-serif", fontWeight: 600 }}>Restore</button>
+                          <button onClick={() => {
+                            if (window.confirm("Permanently delete this analysis?")) {
+                              const newArchived = archivedAnalyses.filter(x => x.id !== a.id);
+                              setArchivedAnalyses(newArchived);
+                              if (auth.currentUser) saveUserData(auth.currentUser.uid, { archivedAnalyses: newArchived });
+                              showNotif("Deleted permanently");
+                            }
+                          }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, color: "#D4878A" }}>🗑️</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
