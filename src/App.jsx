@@ -2380,13 +2380,13 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
         .dot:nth-child(3){animation-delay:.4s;background:#C8A87A}
         @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
         .hscroll{display:flex;gap:14px;overflow-x:auto;padding:4px 4px 12px}
-        * { box-sizing: border-box; max-width: 100%; }
-        html, body { overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
-        #root { width: 100%; overflow-x: hidden; }
+        * { box-sizing: border-box; }
+        html, body, #root { overflow-x: hidden !important; width: 100% !important; max-width: 100vw !important; margin: 0; padding: 0; }
         @media (max-width: 768px) {
-          main { width: 100vw !important; max-width: 100vw !important; overflow-x: hidden !important; }
-          .fade-in { width: 100% !important; max-width: 100vw !important; overflow-x: hidden !important; padding-left: 16px !important; padding-right: 16px !important; }
-          nav { width: 100vw !important; max-width: 100vw !important; overflow-x: hidden !important; }
+          * { max-width: 100% !important; }
+          img { max-width: 100% !important; }
+          main, nav, header, .fade-in { width: 100vw !important; max-width: 100vw !important; overflow-x: hidden !important; }
+          .fade-in > div { max-width: 100% !important; }
         }
         .hscroll::-webkit-scrollbar{height:3px}
         .hscroll::-webkit-scrollbar-thumb{background:rgba(200,135,122,0.3);border-radius:10px}
@@ -2945,7 +2945,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
         {activeTab === "home" && (
           <div
             className="fade-in"
-            style={{ maxWidth: 960, margin: "0 auto", padding: "0 0 48px", width: "100%", overflowX: "hidden" }}
+            style={{ maxWidth: 960, margin: "0 auto", padding: "0 0 48px", width: "100%", boxSizing: "border-box" }}
           >
             {/* ── Hero Banner ── */}
             <div
@@ -4332,7 +4332,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
         {activeTab === "analyze" && (
           <div
             className="fade-in"
-            style={{ padding: "32px 24px", maxWidth: 960, margin: "0 auto" }}
+            style={{ padding: "24px 16px", maxWidth: 960, margin: "0 auto", width: "100%", boxSizing: "border-box" }}
           >
             {/* Hero */}
             <div
@@ -5343,7 +5343,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
         {activeTab === "profile" && (
           <div
             className="fade-in"
-            style={{ padding: "32px 24px", maxWidth: 960, margin: "0 auto" }}
+            style={{ padding: "24px 16px", maxWidth: 960, margin: "0 auto", width: "100%", boxSizing: "border-box" }}
           >
             {/* Profile hero */}
             <div
@@ -5862,7 +5862,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
         )}
 {/* ══════════════ PROGRESS TAB ══════════════ */}
         {activeTab === "progress" && (
-          <div className="fade-in" style={{ padding: "32px 24px", maxWidth: 960, margin: "0 auto" }}>
+          <div className="fade-in" style={{ padding: "24px 16px", maxWidth: 960, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
             <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, fontWeight: 700, color: "#2A2018", marginBottom: 8 }}>Your Skin Journey 🌿</div>
             <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: "#A09080", marginBottom: 32 }}>Track how your skin evolves over time</div>
 
@@ -5948,7 +5948,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
         )}
         {/* ══════════════ ROUTINE TAB ══════════════ */}
         {activeTab === "routine" && (
-          <div className="fade-in" style={{ padding: "32px 24px", maxWidth: 960, margin: "0 auto" }}>
+          <div className="fade-in" style={{ padding: "24px 16px", maxWidth: 960, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
             <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 34, fontWeight: 700, color: "#2A2018", marginBottom: 6 }}>My Routine</div>
             <div style={{ fontSize: 14, color: "#8A7060", marginBottom: 28, fontFamily: "'Jost',sans-serif" }}>Build and customize your daily skincare ritual.</div>
             <div style={{ display: "inline-flex", background: "rgba(255,255,255,0.6)", border: "1px solid rgba(212,184,150,0.3)", borderRadius: 20, padding: 4, marginBottom: 28, backdropFilter: "blur(10px)" }}>
