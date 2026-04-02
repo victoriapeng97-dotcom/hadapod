@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 // PWA viewport fix
-import { signInWithGoogle, logOut, saveUserData, getUserData, auth } from "./firebase";
+import { signInWithGoogle, logOut, saveUserData, getUserData, auth, uploadPhoto } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
 /* ─── DATA ─────────────────────────────────────────────────────── */
@@ -736,13 +736,27 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
       }
       clearInterval(iv);
       setAnalysisProgress(100);
-      setTimeout(() => {
+      setTimeout(async () => {
           setSkinType(d);
           setAnalysisResult(d);
           setAnalysisStage("done");
           if (auth.currentUser) {
             const fullResult = window._lastAnalysis || {};
-            const entry = { id: 'analysis-' + Date.now(), date: new Date().toISOString(), result: d, score: score || ANALYSIS_RESULTS[d]?.score || 0, concerns: concerns || ANALYSIS_RESULTS[d]?.concerns || [], characteristics: characteristics || ANALYSIS_RESULTS[d]?.characteristics || [], summary: summary || '', zoneAnalysis: fullResult.zoneAnalysis || {}, keyIngredients: fullResult.keyIngredients || [], recommendations: fullResult.recommendations || [] };
+            const analysisId = 'analysis-' + Date.now();
+            // Upload photos to Firebase Storage
+            let photoUrls = {};
+            if (auth.currentUser && window._lastSlots) {
+              const slots = window._lastSlots;
+              for (const [slotName, slotData] of Object.entries(slots)) {
+                if (slotData?.base64) {
+                  try {
+                    const url = await uploadPhoto(auth.currentUser.uid, analysisId, slotName, slotData.base64, slotData.mediaType);
+                    photoUrls[slotName] = url;
+                  } catch (e) { console.error('Upload failed:', e); }
+                }
+              }
+            }
+            const entry = { id: analysisId, date: new Date().toISOString(), result: d, score: score || ANALYSIS_RESULTS[d]?.score || 0, concerns: concerns || ANALYSIS_RESULTS[d]?.concerns || [], characteristics: characteristics || ANALYSIS_RESULTS[d]?.characteristics || [], summary: summary || '', zoneAnalysis: fullResult.zoneAnalysis || {}, keyIngredients: fullResult.keyIngredients || [], recommendations: fullResult.recommendations || [], photoUrls };
             setAnalysisHistory(prev => {
               const updated = [entry, ...prev].slice(0, 20);
               saveUserData(auth.currentUser.uid, { analysisHistory: updated });
