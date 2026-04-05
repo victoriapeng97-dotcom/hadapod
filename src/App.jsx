@@ -529,6 +529,14 @@ export default function HadaPod() {
   const [activeSlot, setActiveSlot] = useState(null);
   const [photoSlotsBase64, setPhotoSlotsBase64] = useState({});
   const [analysisMode, setAnalysisMode] = useState("detailed");
+  const [showAnalysisQuestionnaire, setShowAnalysisQuestionnaire] = useState(false);
+  const [analysisContext, setAnalysisContext] = useState({
+    age: "",
+    concerns: [],
+    climate: "",
+    recentChanges: "",
+    currentProducts: "",
+  });
   const slotFileRef = useRef();
   const [collections, setCollections] = useState([
     { id: "c1", name: "My Favourites", emoji: "⭐", items: [] },
@@ -715,7 +723,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
     e.target.value = "";
   };
 
-  const runAnalysis = async (manual, imageBase64, mediaType, additionalImages) => {
+  const runAnalysis = async (manual, imageBase64, mediaType, additionalImages, skinContext) => {
     setAnalysisStage("analyzing");
     setAnalysisProgress(0);
     let p = 0;
@@ -727,7 +735,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
     try {
       let d, score, concerns, characteristics, summary;
       if (imageBase64) {
-        const resp = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageBase64, mediaType, additionalImages: additionalImages || [] }) });
+        const resp = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageBase64, mediaType, additionalImages: additionalImages || [], skinContext }) });
         const result = await resp.json();
         d = result.skinType || SKIN_TYPES[Math.floor(Math.random() * SKIN_TYPES.length)];
         score = result.score;
@@ -4942,14 +4950,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                     disabled={photosUploaded === 0 && analysisStage !== "done"}
                     onClick={() => {
                       if (photosUploaded > 0) {
-                        console.log('photoSlotsBase64:', photoSlotsBase64);
-                        window._lastSlots = photoSlotsBase64;
-                        const slots = Object.values(photoSlotsBase64);
-                        if (slots.length > 0) {
-                          runAnalysis(null, slots[0].base64, slots[0].mediaType, slots.slice(1));
-                        } else {
-                          runAnalysis(null);
-                        }
+                        setShowAnalysisQuestionnaire(true);
                       }
                     }}
                     style={{
