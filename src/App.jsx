@@ -6246,6 +6246,60 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                 </div>
               </div>
             </div>
+            {showAnalysisQuestionnaire && (
+              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }} onClick={() => setShowAnalysisQuestionnaire(false)}>
+                <div style={{ background: "#FBF7F2", borderRadius: 28, padding: "32px 28px", maxWidth: 480, width: "100%", maxHeight: "90vh", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, fontWeight: 700, color: "#2A2018", marginBottom: 6 }}>Before we analyse</div>
+                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: "#8A7060", marginBottom: 24, lineHeight: 1.6 }}>A little context helps Sora give you a much more accurate and personalised analysis.</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                    <div>
+                      <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#B8A090", marginBottom: 10 }}>Age Range</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {["Under 20", "20s", "30s", "40s", "50+"].map(age => (
+                          <button key={age} onClick={() => setAnalysisContext(prev => ({ ...prev, age }))} style={{ padding: "8px 16px", borderRadius: 20, border: "1.5px solid " + (analysisContext.age === age ? "#C8877A" : "rgba(212,184,150,0.4)"), background: analysisContext.age === age ? "rgba(200,135,122,0.1)" : "transparent", fontFamily: "'Jost',sans-serif", fontSize: 13, color: analysisContext.age === age ? "#C8877A" : "#8A7060", cursor: "pointer" }}>{age}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#B8A090", marginBottom: 10 }}>Main Concerns</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {["Acne", "Dryness", "Oiliness", "Redness", "Dark spots", "Fine lines", "Large pores", "Dullness", "Sensitivity"].map(c => (
+                          <button key={c} onClick={() => setAnalysisContext(prev => ({ ...prev, concerns: prev.concerns.includes(c) ? prev.concerns.filter(x => x !== c) : [...prev.concerns, c] }))} style={{ padding: "8px 16px", borderRadius: 20, border: "1.5px solid " + (analysisContext.concerns.includes(c) ? "#C8877A" : "rgba(212,184,150,0.4)"), background: analysisContext.concerns.includes(c) ? "rgba(200,135,122,0.1)" : "transparent", fontFamily: "'Jost',sans-serif", fontSize: 13, color: analysisContext.concerns.includes(c) ? "#C8877A" : "#8A7060", cursor: "pointer" }}>{c}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#B8A090", marginBottom: 10 }}>Climate</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {["Humid", "Dry", "Cold", "Hot", "Mixed", "Urban"].map(c => (
+                          <button key={c} onClick={() => setAnalysisContext(prev => ({ ...prev, climate: c }))} style={{ padding: "8px 16px", borderRadius: 20, border: "1.5px solid " + (analysisContext.climate === c ? "#C8877A" : "rgba(212,184,150,0.4)"), background: analysisContext.climate === c ? "rgba(200,135,122,0.1)" : "transparent", fontFamily: "'Jost',sans-serif", fontSize: 13, color: analysisContext.climate === c ? "#C8877A" : "#8A7060", cursor: "pointer" }}>{c}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#B8A090", marginBottom: 8 }}>Recent skin changes?</div>
+                      <input value={analysisContext.recentChanges} onChange={e => setAnalysisContext(prev => ({ ...prev, recentChanges: e.target.value }))} placeholder="e.g. new products, stress, diet change..." style={{ width: "100%", padding: "12px 16px", border: "1.5px solid rgba(212,184,150,0.4)", borderRadius: 14, fontFamily: "'Jost',sans-serif", fontSize: 13, background: "rgba(255,255,255,0.7)", outline: "none", boxSizing: "border-box" }} />
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#B8A090", marginBottom: 8 }}>Current products?</div>
+                      <input value={analysisContext.currentProducts} onChange={e => setAnalysisContext(prev => ({ ...prev, currentProducts: e.target.value }))} placeholder="e.g. CeraVe cleanser, niacinamide serum..." style={{ width: "100%", padding: "12px 16px", border: "1.5px solid rgba(212,184,150,0.4)", borderRadius: 14, fontFamily: "'Jost',sans-serif", fontSize: 13, background: "rgba(255,255,255,0.7)", outline: "none", boxSizing: "border-box" }} />
+                    </div>
+                  </div>
+                  <button onClick={() => {
+                    setShowAnalysisQuestionnaire(false);
+                    window._lastSlots = photoSlotsBase64;
+                    const slots = Object.values(photoSlotsBase64);
+                    if (slots.length > 0) {
+                      runAnalysis(null, slots[0].base64, slots[0].mediaType, slots.slice(1), analysisContext);
+                    } else {
+                      runAnalysis(null, null, null, [], analysisContext);
+                    }
+                  }} style={{ width: "100%", marginTop: 24, padding: "14px", background: "linear-gradient(135deg,#C8877A,#D4956A)", border: "none", borderRadius: 16, color: "white", fontFamily: "'Jost',sans-serif", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>Analyse My Skin</button>
+                  <button onClick={() => { setShowAnalysisQuestionnaire(false); window._lastSlots = photoSlotsBase64; const slots = Object.values(photoSlotsBase64); if (slots.length > 0) { runAnalysis(null, slots[0].base64, slots[0].mediaType, slots.slice(1), {}); } else { runAnalysis(null, null, null, [], {}); } }} style={{ width: "100%", marginTop: 8, padding: "12px", background: "none", border: "none", fontFamily: "'Jost',sans-serif", fontSize: 13, color: "#A09080", cursor: "pointer" }}>Skip</button>
+                </div>
+              </div>
+            )}
+
             {showUpgradePrompt && (
               <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }} onClick={() => setShowUpgradePrompt(false)}>
                 <div style={{ background: "#FBF7F2", borderRadius: 28, padding: "40px 32px", maxWidth: 420, width: "100%", textAlign: "center" }} onClick={e => e.stopPropagation()}>
