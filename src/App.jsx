@@ -538,6 +538,7 @@ export default function HadaPod() {
     currentProducts: "",
   });
   const slotFileRef = useRef();
+  const multiUploadRef = useRef();
   const [collections, setCollections] = useState([
     { id: "c1", name: "My Favourites", emoji: "⭐", items: [] },
     { id: "c2", name: "Morning Routine", emoji: "☀️", items: [] },
@@ -805,6 +806,26 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
       setPhotoSlotsBase64(prev => ({ ...prev, [slot]: { base64, mediaType } }));
     };
     reader.readAsDataURL(f);
+    e.target.value = "";
+  };
+
+  const handleMultiUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const slotNames = ["forehead", "nose", "leftCheek", "rightCheek", "chin"];
+    files.slice(0, 5).forEach((f, i) => {
+      const slot = slotNames[i];
+      const url = URL.createObjectURL(f);
+      setPhotoSlots((prev) => ({ ...prev, [slot]: url }));
+      setUploadedImage(url);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64 = ev.target.result.split(',')[1];
+        const mediaType = f.type || 'image/jpeg';
+        setPhotoSlotsBase64(prev => ({ ...prev, [slot]: { base64, mediaType } }));
+      };
+      reader.readAsDataURL(f);
+    });
     e.target.value = "";
   };
 
@@ -4870,6 +4891,20 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
                   style={{ display: "none" }}
                 />
                 <input
+                  ref={multiUploadRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleMultiUpload}
+                  style={{ display: "none" }}
+                />
+                <button
+                  onClick={() => multiUploadRef.current.click()}
+                  style={{ width: "100%", marginTop: 12, padding: "12px", background: "rgba(200,135,122,0.08)", border: "1.5px dashed rgba(200,135,122,0.4)", borderRadius: 14, cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, color: "#C8877A", fontWeight: 600 }}
+                >
+                  📸 Upload All 5 Photos at Once
+                </button>
+                <input
                   ref={analysisFileRef}
                   type="file"
                   accept="image/*"
@@ -6247,7 +6282,7 @@ const safeHistory = history.length > 0 ? history : [{ role: "user", content: tex
               </div>
             </div>
             {showAnalysisQuestionnaire && (
-              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }} onClick={() => setShowAnalysisQuestionnaire(false)}>
+              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }} onClick={() => setShowAnalysisQuestionnaire(false)}>
                 <div style={{ background: "#FBF7F2", borderRadius: 28, padding: "32px 28px", maxWidth: 480, width: "100%", maxHeight: "90vh", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, fontWeight: 700, color: "#2A2018", marginBottom: 6 }}>Before we analyse</div>
                   <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: "#8A7060", marginBottom: 24, lineHeight: 1.6 }}>A little context helps Sora give you a much more accurate and personalised analysis.</div>
